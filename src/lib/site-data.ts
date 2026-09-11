@@ -18,6 +18,7 @@ export type SiteSettings = {
   years_in_business: number | null;
   projects_count: number | null;
   warranty_years: number | null;
+  logo_url: string | null;
 };
 
 const EMPTY_SETTINGS: SiteSettings = {
@@ -31,6 +32,7 @@ const EMPTY_SETTINGS: SiteSettings = {
   years_in_business: null,
   projects_count: null,
   warranty_years: null,
+  logo_url: null,
 };
 
 export async function getSiteSettings(): Promise<SiteSettings> {
@@ -138,4 +140,109 @@ export async function getPricingItems(): Promise<PricingItem[]> {
     .order("sort_order", { ascending: true });
   if (error || !data) return [];
   return data as PricingItem[];
+}
+
+// --- Editable page text/images (admin "תוכן עמודים" screen) ---------------
+//
+// Stored as one loosely-typed JSON blob per page so the DB schema stays
+// simple; each page type below defines the actual known fields. Every
+// field is optional and every page component falls back to the site's
+// original hardcoded copy when a field is empty — so an unmigrated DB,
+// an unreachable Supabase project, or an admin who hasn't filled
+// something in yet all render exactly like the original static page,
+// never a blank gap or a literal "undefined".
+
+export type HomeContent = {
+  hero_eyebrow?: string;
+  hero_title_main?: string;
+  hero_title_accent?: string;
+  hero_lead?: string;
+  about_title?: string;
+  about_body?: string;
+  about_image_url?: string;
+  cta_title?: string;
+  cta_body?: string;
+};
+
+export type AboutContent = {
+  hero_title?: string;
+  hero_lead?: string;
+  story_title?: string;
+  story_body_1?: string;
+  story_body_2?: string;
+  story_image_url?: string;
+};
+
+export type ContactContent = {
+  hero_title?: string;
+  hero_lead?: string;
+};
+
+async function getPageContent<T>(page: "home" | "about" | "contact"): Promise<T> {
+  const { data, error } = await supabase.from("page_content").select("data").eq("page", page).maybeSingle();
+  if (error || !data) return {} as T;
+  return (data.data ?? {}) as T;
+}
+
+export const getHomeContent = () => getPageContent<HomeContent>("home");
+export const getAboutContent = () => getPageContent<AboutContent>("about");
+export const getContactContent = () => getPageContent<ContactContent>("contact");
+
+// --- Navigation menu (admin "תפריט ניווט" screen) --------------------------
+
+export type NavMenuItem = {
+  id: string;
+  label: string;
+  href: string;
+  sort_order: number;
+  open_in_new_tab: boolean;
+};
+
+// Shown if the table is empty (shouldn't happen — it's seeded by the
+// migration) or unreachable, so the header never renders with no links.
+const DEFAULT_NAV: NavMenuItem[] = [
+  { id: "default-home", label: "בית", href: "/", sort_order: 0, open_in_new_tab: false },
+  { id: "default-about", label: "אודות", href: "/about", sort_order: 1, open_in_new_tab: false },
+  { id: "default-services", label: "שירותים", href: "/services", sort_order: 2, open_in_new_tab: false },
+  { id: "default-gallery", label: "גלריה", href: "/gallery", sort_order: 3, open_in_new_tab: false },
+  { id: "default-contact", label: "צור קשר", href: "/contact", sort_order: 4, open_in_new_tab: false },
+];
+
+// --- Site theme: accent color + font pair (admin "עיצוב" screen) ---------
+
+export type FontPair = "classic" | "modern" | "elegant";
+
+export type SiteTheme = {
+  accent_color: string;
+  accent_color_2: string;
+  font_pair: FontPair;
+};
+
+export const FONT_STACKS: Record<FontPair, { heading: string; body: string }> = {
+  classic: { heading: "'Rubik', sans-serif", body: "'Heebo', sans-serif" },
+  modern: { heading: "'Assistant', sans-serif", body: "'Assistant', sans-serif" },
+  elegant: { heading: "'Secular One', sans-serif", body: "'Assistant', sans-serif" },
+};
+
+const DEFAULT_THEME: SiteTheme = { accent_color: "#D4AF37", accent_color_2: "#F0D074", font_pair: "classic" };
+
+export async function getSiteTheme(): Promise<SiteTheme> {
+  const { data, error } = await supabase.from("site_theme").select("accent_color, accent_color_2, font_pair").eq("id", 1).maybeSingle();
+  if (error || !data) return DEFAULT_THEME;
+  const fontPair: FontPair = data.font_pair in FONT_STACKS ? (data.font_pair as FontPair) : "classic";
+  return {
+    accent_color: data.accent_color || DEFAULT_THEME.accent_color,
+    accent_color_2: data.accent_color_2 || DEFAULT_THEME.accent_color_2,
+    font_pair: fontPair,
+  };
+}
+
+export async function getNavMenuItems(): Promise<NavMenuItem[]> {
+  const { data, error } = await supabase
+    .from("nav_menu_items")
+    .select("id, label, href, sort_order, open_in_new_tab")
+    .eq("is_visible", true)
+    .order("sort_order", { ascending: true });
+  if (error || !data || data.length === 0) return DEFAULT_NAV;
+  return data as NavMenuItem[];
 }

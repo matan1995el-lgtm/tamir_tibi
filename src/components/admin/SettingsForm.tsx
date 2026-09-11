@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { createClient } from "@/lib/supabase-browser";
+import { IconPhoto, IconUpload } from "@/components/Icons";
 
 type SiteSettings = {
   id: number;
@@ -15,6 +16,7 @@ type SiteSettings = {
   years_in_business: number | null;
   projects_count: number | null;
   warranty_years: number | null;
+  logo_url: string | null;
   updated_at: string | null;
 };
 
@@ -29,6 +31,7 @@ type FormState = {
   years_in_business: string;
   projects_count: string;
   warranty_years: string;
+  logo_url: string;
 };
 
 type Toast = { id: number; text: string; type: "ok" | "err" };
@@ -54,6 +57,7 @@ function toFormState(settings: SiteSettings | null): FormState {
       settings?.warranty_years === null || settings?.warranty_years === undefined
         ? ""
         : String(settings.warranty_years),
+    logo_url: settings?.logo_url ?? "",
   };
 }
 
@@ -73,6 +77,29 @@ export default function SettingsForm({ initialSettings }: { initialSettings: Sit
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+
+  async function handleLogoChosen(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingLogo(true);
+    try {
+      const supabase = createClient();
+      const path = `branding/${crypto.randomUUID()}-${file.name}`;
+      const { data, error } = await supabase.storage.from("gallery").upload(path, file);
+      if (error) throw error;
+      const { data: pub } = supabase.storage.from("gallery").getPublicUrl(data.path);
+      update("logo_url", pub.publicUrl);
+      pushToast("הלוגו הועלה בהצלחה — לא לשכוח ללחוץ 'שמירה'", "ok");
+    } catch {
+      pushToast("שגיאה בהעלאת הלוגו", "err");
+    } finally {
+      setUploadingLogo(false);
+      if (logoInputRef.current) logoInputRef.current.value = "";
+    }
   }
 
   function toIntOrNull(value: string): number | null {
@@ -100,6 +127,7 @@ export default function SettingsForm({ initialSettings }: { initialSettings: Sit
           years_in_business: toIntOrNull(form.years_in_business),
           projects_count: toIntOrNull(form.projects_count),
           warranty_years: toIntOrNull(form.warranty_years),
+          logo_url: form.logo_url.trim() || null,
           updated_at: nowIso,
         })
         .eq("id", 1);
@@ -240,6 +268,23 @@ export default function SettingsForm({ initialSettings }: { initialSettings: Sit
             onChange={(e) => update("warranty_years", e.target.value)}
             placeholder="טרם הוזן"
           />
+        </div>
+
+        <div className="field full">
+          <style>{`.sf-ic { width: 15px; height: 15px; } .sf-ic-xl { width: 32px; height: 32px; opacity: .5; margin-bottom: 10px; }`}</style>
+          <label>לוגו האתר (אופציונלי — אם לא תעלו, יוצג סמל המותג המובנה)</label>
+          <div className="aupload" onClick={() => logoInputRef.current?.click()}>
+            {form.logo_url ? (
+              <img src={form.logo_url} alt="תצוגה מקדימה" style={{ maxHeight: 60, width: "auto" }} />
+            ) : (
+              <IconPhoto className="sf-ic-xl" />
+            )}
+            <div style={{ fontSize: 13, color: "var(--muted)", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+              <IconUpload className="sf-ic" />
+              {uploadingLogo ? "מעלה לוגו…" : form.logo_url ? "החלף לוגו" : "לחצו להעלאת לוגו"}
+            </div>
+          </div>
+          <input ref={logoInputRef} type="file" accept="image/*" hidden onChange={handleLogoChosen} />
         </div>
       </div>
 

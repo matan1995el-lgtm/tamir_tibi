@@ -15,15 +15,20 @@ import {
   IconLogout,
   IconMenu,
   IconX,
+  IconEdit,
+  IconPalette,
 } from "@/components/Icons";
 
 const NAV = [
   { href: "/admin", label: "לוח בקרה", icon: IconDashboard, exact: true },
+  { href: "/admin/content", label: "תוכן עמודים", icon: IconEdit },
+  { href: "/admin/design", label: "עיצוב", icon: IconPalette },
   { href: "/admin/leads", label: "לידים", icon: IconInbox },
   { href: "/admin/services", label: "שירותים", icon: IconWrench },
   { href: "/admin/gallery", label: "גלריה", icon: IconGridIcon },
   { href: "/admin/testimonials", label: "המלצות", icon: IconMessageStar },
   { href: "/admin/pricing", label: "מחירון", icon: IconSliders },
+  { href: "/admin/menu", label: "תפריט ניווט", icon: IconMenu },
   { href: "/admin/settings", label: "הגדרות", icon: IconSettingsGear },
 ];
 

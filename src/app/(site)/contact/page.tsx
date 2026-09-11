@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import ContactForm from "@/components/ContactForm";
 import { IconPhone, IconMail, IconPin, IconClock } from "@/components/Icons";
 import { GateDivider } from "@/components/HeroScene";
-import { formatContactFallback, getSiteSettings } from "@/lib/site-data";
+import { formatContactFallback, getContactContent, getSiteSettings } from "@/lib/site-data";
 
 export const revalidate = 60;
 
@@ -12,14 +12,14 @@ export const metadata: Metadata = {
 };
 
 export default async function ContactPage() {
-  const settings = await getSiteSettings();
+  const [settings, content] = await Promise.all([getSiteSettings(), getContactContent()]);
   return (
     <>
       <section className="page-hero">
         <div className="container">
           <span className="eyebrow">בואו נדבר</span>
-          <h1>צרו קשר</h1>
-          <p>השאירו פרטים ונחזור אליכם עם הצעת מחיר מותאמת אישית, ללא התחייבות.</p>
+          <h1>{content.hero_title || "צרו קשר"}</h1>
+          <p>{content.hero_lead || "השאירו פרטים ונחזור אליכם עם הצעת מחיר מותאמת אישית, ללא התחייבות."}</p>
         </div>
       </section>
 

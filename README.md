@@ -1,36 +1,70 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Metaline — אתר ופאנל ניהול
 
-## Getting Started
+אתר תדמית + פאנל ניהול (Next.js + Supabase) עבור Metaline.
 
-First, run the development server:
+## הרצה מקומית
+
+1. התקנת חבילות:
+   ```bash
+   npm install
+   ```
+2. משתני סביבה — העתיקו את `.env.example` לקובץ `.env.local` ומלאו את הערכים האמיתיים מפרויקט ה-Supabase (Project Settings → API):
+   ```bash
+   cp .env.example .env.local
+   ```
+   נדרשים:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+3. הרצה:
+   ```bash
+   npm run dev
+   ```
+   האתר יעלה בכתובת http://localhost:3000, פאנל הניהול בכתובת http://localhost:3000/admin.
+
+## בדיקות לפני פרסום
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run lint    # בדיקת קוד
+npm run build   # בנייית production — חייבת לעבור בלי שגיאות
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## פריסה ל-Vercel
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+**אפשרות א׳ — חיבור ל-GitHub (מומלץ):**
+1. `git push` לריפוזיטורי ב-GitHub.
+2. ב-vercel.com → New Project → יבוא הריפו.
+3. בהגדרות הפרויקט → Environment Variables, הוסיפו את שני המשתנים מ-`.env.example` (עם הערכים האמיתיים), עבור Production/Preview/Development.
+4. Deploy. כל push ל-`main` יפרוס גרסה חדשה אוטומטית.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+**אפשרות ב׳ — פריסה ישירה מהמחשב (ללא GitHub):**
+```bash
+npx vercel login
+npx vercel --prod
+```
+ה-CLI ישאל שאלות הגדרה (שם פרויקט וכו׳) ויבקש את משתני הסביבה, או שאפשר להוסיף אותם מראש דרך `vercel env add`.
 
-## Learn More
+## מבנה הפרויקט (תמצית)
 
-To learn more about Next.js, take a look at the following resources:
+- `src/app/(site)/` — עמודי האתר הציבורי
+- `src/app/admin/` — פאנל הניהול (מאובטח, דורש התחברות)
+- `src/lib/site-data.ts` — שליפת תוכן מ-Supabase (עם ISR של 60 שניות)
+- `src/proxy.ts` — הגנה על נתיבי `/admin/*` (Next.js 16 שינה את השם מ-`middleware.ts`)
+- `supabase/schema.sql` — הסכמה המלאה של מסד הנתונים (מסמך תיעוד — עדכנו אותו אם משנים טבלאות ישירות ב-Supabase)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## מה אפשר לנהל מפאנל הניהול
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **לוח בקרה** — תמונת מצב מהירה (לידים, שירותים, גלריה, המלצות)
+- **תוכן עמודים** — כותרות ופסקאות בעמוד הבית / אודות / צור קשר, כולל תמונות
+- **עיצוב** — גוון צבע ראשי (פלטות מוכנות או צבע מותאם אישית) וגופן לכל האתר הציבורי
+- **לידים** — פניות מהאתר, עם חיפוש/סינון/סטטוס/טווח תאריכים, ייצוא ל-CSV, וחיוג/וואטסאפ ישירים לכל ליד
+- **שירותים, גלריה, המלצות, מחירון** — הוספה/עריכה/מחיקה/סדר תצוגה/פרסום, כולל העלאת תמונות בגלריה
+- **תפריט ניווט** — הקישורים בתפריט העליון של האתר
+- **הגדרות** — פרטי העסק (טלפון, כתובת וכו׳) + לוגו מותאם אישית (אופציונלי)
 
-## Deploy on Vercel
+## איך שינויים בפאנל הניהול מגיעים לאתר החי
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+כל דף ציבורי (בית, שירותים, גלריה, אודות וכו') קורא את הנתונים ישירות מסופרבייס עם `revalidate = 60` — כלומר Next.js שומר עותק "קפוא" של הדף למשך עד 60 שניות, ואז בפעם הבאה שמישהו נכנס אליו, הוא נבנה מחדש ברקע עם הנתונים העדכניים. בפועל: אחרי שמוסיפים/עורכים/מוחקים שירות (או כל תוכן אחר) בפאנל הניהול, השינוי מופיע באתר הציבורי תוך דקה לכל היותר, בלי צורך בפריסה (deploy) מחדש. רענון ידני (Ctrl+F5) יראה את זה מיידית.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## הערה על תוכן
+
+כל טקסט המסומן ב-`[להשלמה: ...]` הוא מקום שמור לפרט עסקי אמיתי (טלפון, כתובת, שעות פעילות וכו׳) שטרם התקבל מהלקוח — יש להשלים אותו בפאנל הניהול (עמוד "הגדרות") לפני שהאתר עולה לאוויר סופית. תמונות פרויקטים שטרם הועלו מוצגות עם הדמיה מצוירת ותווית "הדמיה" — יש להחליף אותן בתמונות אמיתיות דרך פאנל הניהול → גלריה.

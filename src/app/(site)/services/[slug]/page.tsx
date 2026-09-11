@@ -77,6 +77,11 @@ export default async function ServiceDetailPage({ params }: { params: Promise<{ 
       <section className="page-hero">
         <div className="container">
           <div className="svc-icon" style={{ marginBottom: 20 }}>
+            {/* getServiceIcon is a stable lookup in a static map (same slug
+                always returns the same component reference), and this is an
+                async Server Component with no client re-renders to worry
+                about — safe despite the lint rule's static analysis. */}
+            {/* eslint-disable-next-line react-hooks/static-components */}
             <Icon />
           </div>
           <span className="eyebrow">השירותים שלנו</span>

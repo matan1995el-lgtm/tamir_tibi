@@ -346,6 +346,34 @@ export function IconSettingsGear({ className }: P) {
   );
 }
 
+export function IconDownload({ className }: P) {
+  return (
+    <svg className={className} viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <path d="M10 3v9M6.5 8.5 10 12l3.5-3.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M3.5 13.5v2A1.5 1.5 0 0 0 5 17h10a1.5 1.5 0 0 0 1.5-1.5v-2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function IconPhoneCall({ className }: P) {
+  return (
+    <svg className={className} viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <path d="M4.5 4h3l1.2 3.5-1.8 1.4a10.5 10.5 0 0 0 5.2 5.2l1.4-1.8L17 13.5v3c0 .8-.7 1.4-1.5 1.35C8.9 17.4 4.1 12.6 3.65 5.9 3.6 5.1 3.7 4 4.5 4Z" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function IconPalette({ className }: P) {
+  return (
+    <svg className={className} viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M10 2.5a7.5 7.5 0 1 0 0 15c.9 0 1.5-.7 1.5-1.5 0-.4-.15-.75-.4-1a1.4 1.4 0 0 1-.4-1c0-.8.65-1.4 1.4-1.4H13.8A3.7 3.7 0 0 0 17.5 9C17.5 5.4 14.1 2.5 10 2.5Z" strokeLinejoin="round" />
+      <circle cx="6.3" cy="8.3" r="1.05" fill="currentColor" stroke="none" />
+      <circle cx="9.3" cy="5.8" r="1.05" fill="currentColor" stroke="none" />
+      <circle cx="13" cy="7" r="1.05" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
 export function IconInboxEmpty({ className }: P) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4">

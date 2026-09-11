@@ -3,16 +3,15 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { QuoteButton } from "@/components/QuoteModal";
+import type { NavMenuItem } from "@/lib/site-data";
 
-const NAV = [
-  { href: "/", label: "בית" },
-  { href: "/about", label: "אודות" },
-  { href: "/services", label: "שירותים" },
-  { href: "/gallery", label: "גלריה" },
-  { href: "/contact", label: "צור קשר" },
-];
-
-export default function SiteHeader() {
+export default function SiteHeader({
+  navItems,
+  logoUrl,
+}: {
+  navItems: NavMenuItem[];
+  logoUrl?: string | null;
+}) {
   const [solid, setSolid] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -41,12 +40,12 @@ export default function SiteHeader() {
     <header className={`site-header${solid ? " solid" : ""}`}>
       <div className="container header-inner">
         <Link href="/" className="brand">
-          <img src="/brand/symbol-white.png" alt="Metaline" />
+          <img src={logoUrl || "/brand/symbol-white.png"} alt="Metaline" />
           <span className="brand-name">Metaline</span>
         </Link>
         <nav className="nav">
-          {NAV.map((n) => (
-            <Link key={n.href} href={n.href}>
+          {navItems.map((n) => (
+            <Link key={n.id} href={n.href} target={n.open_in_new_tab ? "_blank" : undefined} rel={n.open_in_new_tab ? "noopener noreferrer" : undefined}>
               {n.label}
             </Link>
           ))}
@@ -66,8 +65,14 @@ export default function SiteHeader() {
         <button className="close-x" aria-label="סגירת תפריט" onClick={() => setOpen(false)}>
           ×
         </button>
-        {NAV.map((n) => (
-          <Link key={n.href} href={n.href} onClick={() => setOpen(false)}>
+        {navItems.map((n) => (
+          <Link
+            key={n.id}
+            href={n.href}
+            target={n.open_in_new_tab ? "_blank" : undefined}
+            rel={n.open_in_new_tab ? "noopener noreferrer" : undefined}
+            onClick={() => setOpen(false)}
+          >
             {n.label}
           </Link>
         ))}

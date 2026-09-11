@@ -50,10 +50,14 @@ export default function AccessibilityWidget() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    // localStorage doesn't exist during server render, so this one-time
+    // hydration read can only happen in an effect after mount — there's no
+    // way to have this value during the initial render itself.
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = { ...DEFAULT_STATE, ...JSON.parse(raw) } as A11yState;
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydration from a browser-only store, see comment above
         setState(parsed);
         applyState(parsed);
       }
@@ -112,9 +116,16 @@ export default function AccessibilityWidget() {
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
       >
-        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <circle cx="12" cy="4.2" r="2.1" />
-          <path d="M12 7.2c-3.2 0-6.6.9-6.9 3l-.7 4.4a1.1 1.1 0 0 0 2.17.35l.86-3.9.98.2-1.6 8.4a1.15 1.15 0 0 0 2.26.42l1.13-5.85h1.7l1.13 5.85a1.15 1.15 0 0 0 2.26-.42l-1.6-8.4.98-.2.86 3.9a1.1 1.1 0 0 0 2.17-.35l-.7-4.4c-.3-2.1-3.7-3-6.9-3Z" />
+        {/* Standard international accessibility symbol (the ISA wheelchair
+            pictogram), built from simple stroked primitives so it stays
+            crisp and unmistakably recognizable at this size — deliberately
+            the well-known mark rather than a custom one. */}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <circle cx="14" cy="4.5" r="1.7" fill="currentColor" stroke="none" />
+          <path d="M13 8v3.2h4.2" />
+          <path d="M13 11.2l-2.3 3.8" />
+          <path d="M10.7 15c-2 0-3.6 1.6-3.6 3.6s1.6 3.6 3.6 3.6c1.7 0 3.1-1.15 3.5-2.7" />
+          <path d="M13 11.2l2 8.6h2.6" />
         </svg>
       </button>
 

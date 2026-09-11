@@ -22,6 +22,9 @@ export default function Preloader() {
     }
 
     if (reduced || seen) {
+      // sessionStorage/matchMedia are browser-only — this can't be known
+      // during server render, so the check has to happen in an effect.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDone(true);
       return;
     }

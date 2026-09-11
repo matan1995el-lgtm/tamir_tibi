@@ -108,3 +108,89 @@ create policy "admin all pricing" on pricing_items for all to authenticated usin
 create policy "admin all leads" on leads for all to authenticated using (true) with check (true);
 
 insert into site_settings (id) values (1) on conflict (id) do nothing;
+
+-- ---------------------------------------------------------------------
+-- Added later: editable page text/images + navigation menu (admin
+-- "תוכן עמודים" and "תפריט ניווט" screens) + optional custom logo.
+-- Applied directly to the live project via the Supabase MCP tools;
+-- kept here so the schema can be reproduced from scratch.
+-- ---------------------------------------------------------------------
+
+create table if not exists page_content (
+  page text primary key,
+  data jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
+alter table page_content enable row level security;
+
+create policy "public read page_content" on page_content
+  for select to anon, authenticated using (true);
+
+create policy "admin all page_content" on page_content
+  for all to authenticated using (true) with check (true);
+
+insert into page_content (page, data) values
+  ('home', '{}'::jsonb),
+  ('about', '{}'::jsonb),
+  ('contact', '{}'::jsonb)
+on conflict (page) do nothing;
+
+create table if not exists nav_menu_items (
+  id uuid primary key default gen_random_uuid(),
+  label text not null,
+  href text not null,
+  sort_order integer not null default 0,
+  is_visible boolean not null default true,
+  open_in_new_tab boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+alter table nav_menu_items enable row level security;
+
+create policy "public read visible nav_menu_items" on nav_menu_items
+  for select to anon, authenticated using (is_visible = true);
+
+create policy "admin all nav_menu_items" on nav_menu_items
+  for all to authenticated using (true) with check (true);
+
+insert into nav_menu_items (label, href, sort_order) values
+  ('בית', '/', 0),
+  ('אודות', '/about', 1),
+  ('שירותים', '/services', 2),
+  ('גלריה', '/gallery', 3),
+  ('צור קשר', '/contact', 4)
+on conflict do nothing;
+
+alter table site_settings add column if not exists logo_url text;
+
+-- Content images (page-content circles + site logo) reuse the same
+-- public "gallery" storage bucket GalleryManager already uploads to,
+-- under a content/ and branding/ path prefix respectively — no new
+-- bucket or storage policy needed.
+
+-- ---------------------------------------------------------------------
+-- Added later: site theme (admin "עיצוב" screen) — accent color + font
+-- pair, applied site-wide via CSS custom properties scoped to the public
+-- (site) layout only, so the admin panel's own look never changes.
+-- ---------------------------------------------------------------------
+
+create table if not exists site_theme (
+  id int primary key default 1,
+  accent_color text not null default '#D4AF37',
+  accent_color_2 text not null default '#F0D074',
+  font_pair text not null default 'classic',
+  updated_at timestamptz not null default now(),
+  constraint single_row check (id = 1),
+  constraint valid_font_pair check (font_pair in ('classic', 'modern', 'elegant'))
+);
+
+alter table site_theme enable row level security;
+
+create policy "public read site_theme" on site_theme
+  for select to anon, authenticated using (true);
+
+create policy "admin all site_theme" on site_theme
+  for all to authenticated using (true) with check (true);
+
+insert into site_theme (id) values (1) on conflict (id) do nothing;

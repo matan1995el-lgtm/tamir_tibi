@@ -16,15 +16,33 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
 
+/* Every icon component in the app renders a bare <svg viewBox="..."> with
+   no width/height of its own — sizing is meant to come from a className
+   the caller passes. Several call sites across the admin panel (leads
+   table row actions, nav-menu/pricing/services "delete"/"cancel" buttons,
+   the sidebar's mobile-close button) never passed one, so those icons
+   fell back to the browser's default replaced-element size (300×150) and
+   rendered as oversized, clipped, invisible blobs instead of icons. This
+   is a low-specificity safety net: any svg with a real sizing rule
+   elsewhere (.gm-ic, .fab svg, etc.) keeps that rule since a class
+   selector always outweighs a bare tag selector — this only catches the
+   ones nothing else sizes. */
+svg { width: 16px; height: 16px; flex-shrink: 0; }
+
 body {
-  font-family: 'Heebo', sans-serif;
+  /* Falls back to the original hardcoded fonts outside .site-themed
+     (i.e. the admin panel), which never gets a --font-body override —
+     the client's font/color choices in "עיצוב" apply to the public site
+     only, so the admin UI itself stays visually consistent regardless
+     of what they pick. */
+  font-family: var(--font-body, 'Heebo', sans-serif);
   background: var(--ink-0);
   color: var(--white);
   direction: rtl;
 }
 
 h1, h2, h3, .brandfont {
-  font-family: 'Rubik', sans-serif;
+  font-family: var(--font-heading, 'Rubik', sans-serif);
 }
 
 a { color: var(--gold); text-decoration: none; }
@@ -153,7 +171,12 @@ textarea:focus-visible, select:focus-visible, [tabindex]:focus-visible {
 
 /* ---------- HERO ---------- */
 .hero {
-  position: relative; overflow: hidden; min-height: 840px;
+  /* Was min-height: 840px with align-items: center *and* 100px of extra
+     top padding on .hero-content below — the two fought each other and
+     pushed the actual title/lead block down near the bottom of a very
+     tall box, reading as a big empty gap under the header. Centered
+     vertically in a shorter box instead. */
+  position: relative; overflow: hidden; min-height: 620px;
   background:
     radial-gradient(1200px 600px at 85% -8%, rgba(212, 175, 55, .10), transparent 58%),
     radial-gradient(900px 500px at 10% 100%, rgba(212, 175, 55, .05), transparent 60%),
@@ -163,7 +186,7 @@ textarea:focus-visible, select:focus-visible, [tabindex]:focus-visible {
 canvas#dust { position: absolute; inset: 0; z-index: 1; opacity: .55; }
 .hero-motif { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; opacity: .55; pointer-events: none; }
 
-.hero-content { position: relative; z-index: 3; padding-top: 100px; }
+.hero-content { position: relative; z-index: 3; padding-top: 36px; }
 .hero-grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 40px; align-items: center; }
 .hero h1 { font-size: 54px; line-height: 1.13; color: var(--white); margin: 22px 0 20px; font-weight: 800; text-wrap: pretty; text-shadow: 0 2px 30px rgba(0, 0, 0, .4); }
 .hero h1 span { color: var(--gold); text-shadow: 0 0 40px rgba(212, 175, 55, .4); }
@@ -459,15 +482,36 @@ canvas#dust { position: absolute; inset: 0; z-index: 1; opacity: .55; }
 @media (max-width: 680px) {
   .mcta-bar { display: block; }
   .fab { bottom: calc(26px + var(--mcta-h, 76px)); }
-  .a11y-fab { bottom: calc(96px + var(--mcta-h, 76px)); }
+  .a11y-fab { bottom: calc(26px + var(--mcta-h, 76px)); }
 }
 
-/* ---------- ACCESSIBILITY WIDGET ---------- */
-.a11y-fab { position: fixed; left: 26px; bottom: 96px; z-index: 40; width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(155deg, var(--gold-2), var(--gold) 70%); display: flex; align-items: center; justify-content: center; box-shadow: 0 14px 34px -10px rgba(0, 0, 0, .6); border: none; padding: 0; cursor: pointer; transition: transform .25s ease; }
+/* ---------- ACCESSIBILITY WIDGET ----------
+   Mirrors the WhatsApp FAB on the opposite side, same size — and uses the
+   internationally recognized accessibility symbol (the ISA wheelchair
+   icon) on the standard accessibility blue, rather than a custom mark,
+   since this is the icon people already know to look for. */
+.a11y-fab { position: fixed; right: 26px; bottom: 26px; z-index: 40; width: 58px; height: 58px; border-radius: 50%; background: #0057D9; display: flex; align-items: center; justify-content: center; box-shadow: 0 14px 34px -10px rgba(0, 0, 0, .6), 0 0 0 6px rgba(0, 87, 217, .14); border: none; padding: 0; cursor: pointer; transition: transform .25s ease; }
 .a11y-fab:hover { transform: translateY(-3px); }
-.a11y-fab svg { width: 24px; height: 24px; color: #181109; }
+.a11y-fab svg { width: 30px; height: 30px; color: #fff; }
 .a11y-panel-overlay { position: fixed; inset: 0; z-index: 90; background: rgba(9, 12, 15, .55); backdrop-filter: blur(2px); animation: qmodalIn .18s ease; }
-.a11y-panel { position: fixed; left: 20px; bottom: 156px; z-index: 91; width: 320px; max-width: calc(100vw - 40px); max-height: 74vh; overflow-y: auto; background: linear-gradient(160deg, var(--ink-2), var(--ink-1)); border: 1px solid var(--line-2); border-radius: 10px; padding: 22px; box-shadow: 0 30px 70px -20px rgba(0, 0, 0, .7); }
+.a11y-panel { position: fixed; right: 20px; bottom: 96px; z-index: 91; width: 320px; max-width: calc(100vw - 40px); max-height: 74vh; overflow-y: auto; background: linear-gradient(160deg, var(--ink-2), var(--ink-1)); border: 1px solid var(--line-2); border-radius: 10px; padding: 22px; box-shadow: 0 30px 70px -20px rgba(0, 0, 0, .7); }
+
+/* ---------- QUICK-CONTACT POPUP (WhatsApp FAB) ---------- */
+.qa-panel-overlay { position: fixed; inset: 0; z-index: 90; background: rgba(9, 12, 15, .55); backdrop-filter: blur(2px); animation: qmodalIn .18s ease; }
+.qa-panel { position: fixed; left: 20px; bottom: 96px; z-index: 91; width: 280px; max-width: calc(100vw - 40px); background: linear-gradient(160deg, var(--ink-2), var(--ink-1)); border: 1px solid var(--line-2); border-radius: 10px; padding: 18px; box-shadow: 0 30px 70px -20px rgba(0, 0, 0, .7); }
+.qa-panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.qa-panel-head h3 { font-size: 15px; font-weight: 700; margin: 0; color: var(--white); }
+.qa-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.qa-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 16px 8px; border-radius: 8px; background: rgba(255, 255, 255, .04); border: 1px solid var(--line-2); color: var(--white); font-size: 13px; font-weight: 600; text-align: center; cursor: pointer; transition: background .2s ease, transform .2s ease; }
+.qa-item:hover { background: rgba(255, 255, 255, .08); transform: translateY(-2px); }
+.qa-ic { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; }
+.qa-ic svg { width: 22px; height: 22px; }
+.qa-wa .qa-ic { color: #25D366; }
+.qa-phone .qa-ic { color: var(--gold-2); }
+.qa-mail .qa-ic { color: #0057D9; }
+.qa-form .qa-ic { color: var(--white); }
+.qa-disabled { opacity: .4; cursor: not-allowed; }
+.qa-disabled:hover { background: rgba(255, 255, 255, .04); transform: none; }
 .a11y-panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
 .a11y-panel-head h3 { font-size: 16px; font-weight: 700; margin: 0; color: var(--white); }
 .a11y-panel-close { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 20px; line-height: 1; padding: 4px; }
@@ -558,7 +602,7 @@ html.a11y-grayscale .cursor-ring, html.a11y-grayscale .cursor-dot { display: non
 .admin-content { padding: 28px; flex: 1; }
 
 /* KPI cards */
-.kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 28px; }
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 18px; margin-bottom: 28px; }
 .kpi-card { background: linear-gradient(160deg, var(--ink-2), var(--ink-1)); border: 1px solid var(--line-2); border-radius: 6px; padding: 20px 22px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .kpi-card .lbl { font-size: 12.5px; color: var(--muted); margin-bottom: 8px; }
 .kpi-card .val { font-family: 'Rubik', sans-serif; font-size: 26px; font-weight: 800; }
@@ -582,6 +626,31 @@ html.a11y-grayscale .cursor-ring, html.a11y-grayscale .cursor-dot { display: non
 .abtn:disabled { opacity: .5; cursor: not-allowed; }
 
 /* Data table */
+/* ---------- DESIGN / THEME CUSTOMIZER (admin) ---------- */
+.theme-swatch-row { display: flex; gap: 14px; flex-wrap: wrap; }
+.theme-swatch { position: relative; width: 56px; height: 56px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center; transition: transform .15s ease, border-color .15s ease; }
+.theme-swatch:hover { transform: scale(1.06); }
+.theme-swatch.active { border-color: var(--white); }
+.theme-swatch-check { color: #fff; filter: drop-shadow(0 1px 3px rgba(0,0,0,.6)); }
+.theme-swatch-custom { background: repeating-conic-gradient(#333 0% 25%, #444 0% 50%) 0 0 / 12px 12px; overflow: hidden; font-size: 20px; color: var(--muted); }
+.theme-swatch-labels { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 8px; }
+.theme-swatch-labels span { width: 56px; text-align: center; font-size: 11px; color: var(--muted); }
+.theme-font-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.theme-font-card { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 18px 16px; border-radius: 8px; background: rgba(255,255,255,.03); border: 1px solid var(--line-2); cursor: pointer; text-align: right; transition: border-color .15s ease, background .15s ease; }
+.theme-font-card:hover { border-color: var(--line); }
+.theme-font-card.active { border-color: var(--gold); background: rgba(212,175,55,.06); }
+.theme-font-sample { font-size: 21px; color: var(--white); font-weight: 700; }
+.theme-font-label { font-size: 12px; color: var(--muted); }
+.theme-font-check { position: absolute; top: 14px; left: 14px; color: var(--gold); }
+
+.lead-stats-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+.lead-stat { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 12px 20px; border-radius: 6px; background: rgba(255,255,255,.03); border: 1px solid var(--line-2); min-width: 84px; font-size: 12px; color: var(--muted); }
+.lead-stat-n { font-size: 20px; font-weight: 800; color: var(--white); font-family: 'Rubik', sans-serif; }
+.lead-stat-new .lead-stat-n { color: #93c5fd; }
+.lead-stat-contacted .lead-stat-n { color: var(--gold-2); }
+.lead-stat-won .lead-stat-n { color: #7ee2a8; }
+.lead-stat-lost .lead-stat-n { color: #94a3b8; }
+
 .atable-wrap { overflow-x: auto; }
 .atable { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .atable th { text-align: right; padding: 11px 14px; color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .4px; border-bottom: 1px solid var(--line-2); white-space: nowrap; }

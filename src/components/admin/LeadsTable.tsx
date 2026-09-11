@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase-browser";
 import {
@@ -12,7 +12,59 @@ import {
   IconEye,
   IconTrash,
   IconX,
+  IconDownload,
+  IconPhoneCall,
 } from "@/components/Icons";
+
+function WaIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.29-1.39a9.9 9.9 0 0 0 4.75 1.21h.01c5.46 0 9.9-4.45 9.9-9.91 0-2.65-1.03-5.14-2.9-7.01A9.87 9.87 0 0 0 12.04 2Zm5.8 14.11c-.24.68-1.4 1.3-1.94 1.38-.5.08-1.12.11-1.81-.11-.42-.13-.95-.31-1.64-.6-2.88-1.24-4.76-4.14-4.9-4.33-.14-.19-1.17-1.56-1.17-2.97 0-1.41.74-2.1 1-2.39.26-.28.57-.35.76-.35.19 0 .38 0 .55.01.18.01.41-.07.64.49.24.58.81 2 .88 2.14.07.14.12.31.02.5-.09.19-.14.31-.28.48-.14.16-.29.36-.42.49-.14.14-.28.29-.12.57.16.28.71 1.17 1.52 1.9 1.05.94 1.93 1.23 2.21 1.37.28.14.44.12.6-.07.16-.19.68-.79.87-1.07.18-.28.36-.23.6-.14.24.09 1.55.73 1.81.86.26.14.44.2.5.31.07.12.07.68-.17 1.36Z" />
+    </svg>
+  );
+}
+
+function waLink(rawPhone: string): string {
+  const digits = rawPhone.replace(/[^\d]/g, "");
+  if (digits.startsWith("972")) return `https://wa.me/${digits}`;
+  if (digits.startsWith("0")) return `https://wa.me/972${digits.slice(1)}`;
+  return `https://wa.me/${digits}`;
+}
+
+function csvEscape(value: string): string {
+  const v = value.replace(/"/g, '""');
+  return /[",\n]/.test(v) ? `"${v}"` : v;
+}
+
+function downloadLeadsCsv(rows: Lead[]) {
+  const headers = ["שם", "טלפון", "אימייל", "שירות", "סטטוס", "הודעה", "תאריך"];
+  const lines = [headers.map(csvEscape).join(",")];
+  for (const l of rows) {
+    lines.push(
+      [
+        l.name,
+        l.phone,
+        l.email ?? "",
+        l.service ?? "",
+        STATUS_LABELS[l.status],
+        (l.message ?? "").replace(/\n/g, " "),
+        new Date(l.created_at).toLocaleDateString("he-IL"),
+      ]
+        .map((v) => csvEscape(String(v)))
+        .join(",")
+    );
+  }
+  // BOM so Excel opens the Hebrew text as UTF-8 instead of mangling it.
+  const blob = new Blob(["﻿" + lines.join("\n")], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `לידים-מטאליין-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
 
 export type LeadStatus = "new" | "contacted" | "won" | "lost";
 
@@ -47,6 +99,13 @@ const STATUS_FILTERS: { key: "all" | LeadStatus; label: string }[] = [
   { key: "lost", label: "אבד" },
 ];
 
+// A plain helper (not a component) so it isn't re-declared every render —
+// takes the current sort state as arguments instead of closing over it.
+function renderSortIcon(column: SortKey, sortKey: SortKey, sortDir: SortDir) {
+  if (sortKey !== column) return null;
+  return sortDir === "asc" ? <IconChevronUp /> : <IconChevronDown />;
+}
+
 export default function LeadsTable({ initialLeads }: { initialLeads: Lead[] }) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
@@ -59,13 +118,27 @@ export default function LeadsTable({ initialLeads }: { initialLeads: Lead[] }) {
   const [viewingLead, setViewingLead] = useState<Lead | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [pendingId, setPendingId] = useState<string | null>(null);
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const toastSeq = useRef(0);
 
   const hasAnyLeads = leads.length > 0;
 
+  const statusCounts = useMemo(() => {
+    const counts: Record<LeadStatus, number> = { new: 0, contacted: 0, won: 0, lost: 0 };
+    for (const l of leads) counts[l.status] += 1;
+    return counts;
+  }, [leads]);
+
   const filteredAndSorted = useMemo(() => {
     const q = search.trim().toLowerCase();
+    const from = dateFrom ? new Date(dateFrom + "T00:00:00") : null;
+    const to = dateTo ? new Date(dateTo + "T23:59:59") : null;
     const filtered = leads.filter((l) => {
       if (statusFilter !== "all" && l.status !== statusFilter) return false;
+      const created = new Date(l.created_at);
+      if (from && created < from) return false;
+      if (to && created > to) return false;
       if (!q) return true;
       return (
         l.name.toLowerCase().includes(q) ||
@@ -95,7 +168,8 @@ export default function LeadsTable({ initialLeads }: { initialLeads: Lead[] }) {
   }
 
   function addToast(text: string, type: "ok" | "err") {
-    const id = Date.now() + Math.random();
+    toastSeq.current += 1;
+    const id = toastSeq.current;
     setToasts((t) => [...t, { id, text, type }]);
     setTimeout(() => {
       setToasts((t) => t.filter((x) => x.id !== id));
@@ -105,6 +179,8 @@ export default function LeadsTable({ initialLeads }: { initialLeads: Lead[] }) {
   function resetFilters() {
     setSearch("");
     setStatusFilter("all");
+    setDateFrom("");
+    setDateTo("");
   }
 
   async function handleStatusChange(id: string, newStatus: LeadStatus) {
@@ -154,13 +230,23 @@ export default function LeadsTable({ initialLeads }: { initialLeads: Lead[] }) {
     }
   }
 
-  function SortIcon({ column }: { column: SortKey }) {
-    if (sortKey !== column) return null;
-    return sortDir === "asc" ? <IconChevronUp /> : <IconChevronDown />;
-  }
-
   return (
     <div>
+      {hasAnyLeads && (
+        <div className="lead-stats-row">
+          <div className="lead-stat">
+            <span className="lead-stat-n">{leads.length}</span>
+            <span>סה&quot;כ</span>
+          </div>
+          {STATUS_FILTERS.filter((f) => f.key !== "all").map((f) => (
+            <div key={f.key} className={`lead-stat lead-stat-${f.key}`}>
+              <span className="lead-stat-n">{statusCounts[f.key as LeadStatus]}</span>
+              <span>{f.label}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div
         className="admin-panel-head"
         style={{ flexWrap: "wrap", gap: 12, marginBottom: 18 }}
@@ -178,38 +264,84 @@ export default function LeadsTable({ initialLeads }: { initialLeads: Lead[] }) {
           ))}
         </div>
 
-        <div style={{ position: "relative", minWidth: 220 }}>
-          <span
-            style={{
-              position: "absolute",
-              insetInlineStart: 12,
-              top: "50%",
-              transform: "translateY(-50%)",
-              width: 16,
-              height: 16,
-              color: "var(--muted)",
-              pointerEvents: "none",
-            }}
-          >
-            <IconSearch />
-          </span>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+          <div style={{ position: "relative", minWidth: 220 }}>
+            <span
+              style={{
+                position: "absolute",
+                insetInlineStart: 12,
+                top: "50%",
+                transform: "translateY(-50%)",
+                width: 16,
+                height: 16,
+                color: "var(--muted)",
+                pointerEvents: "none",
+              }}
+            >
+              <IconSearch />
+            </span>
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="חיפוש לפי שם, טלפון או אימייל..."
+              style={{
+                width: "100%",
+                background: "var(--ink-2)",
+                border: "1px solid var(--line-2)",
+                borderRadius: 3,
+                color: "var(--white)",
+                padding: "10px 14px 10px 14px",
+                paddingInlineStart: 36,
+                fontSize: 13.5,
+                fontFamily: "'Heebo', sans-serif",
+              }}
+            />
+          </div>
+
           <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="חיפוש לפי שם, טלפון או אימייל..."
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            title="מתאריך"
             style={{
-              width: "100%",
               background: "var(--ink-2)",
               border: "1px solid var(--line-2)",
               borderRadius: 3,
               color: "var(--white)",
-              padding: "10px 14px 10px 14px",
-              paddingInlineStart: 36,
-              fontSize: 13.5,
+              padding: "9px 10px",
+              fontSize: 12.5,
               fontFamily: "'Heebo', sans-serif",
+              colorScheme: "dark",
             }}
           />
+          <span style={{ color: "var(--muted)", fontSize: 12.5 }}>עד</span>
+          <input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            title="עד תאריך"
+            style={{
+              background: "var(--ink-2)",
+              border: "1px solid var(--line-2)",
+              borderRadius: 3,
+              color: "var(--white)",
+              padding: "9px 10px",
+              fontSize: 12.5,
+              fontFamily: "'Heebo', sans-serif",
+              colorScheme: "dark",
+            }}
+          />
+
+          <button
+            type="button"
+            className="abtn abtn-ghost abtn-sm"
+            onClick={() => downloadLeadsCsv(filteredAndSorted)}
+            disabled={filteredAndSorted.length === 0}
+            title="ייצוא הרשימה המסוננת לקובץ CSV (נפתח באקסל)"
+          >
+            <IconDownload /> ייצוא ל-CSV
+          </button>
         </div>
       </div>
 
@@ -233,7 +365,7 @@ export default function LeadsTable({ initialLeads }: { initialLeads: Lead[] }) {
               <tr>
                 <th className="sortable" onClick={() => toggleSort("name")}>
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-                    שם <SortIcon column="name" />
+                    שם {renderSortIcon("name", sortKey, sortDir)}
                   </span>
                 </th>
                 <th>טלפון</th>
@@ -241,12 +373,12 @@ export default function LeadsTable({ initialLeads }: { initialLeads: Lead[] }) {
                 <th>שירות</th>
                 <th className="sortable" onClick={() => toggleSort("status")}>
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-                    סטטוס <SortIcon column="status" />
+                    סטטוס {renderSortIcon("status", sortKey, sortDir)}
                   </span>
                 </th>
                 <th className="sortable" onClick={() => toggleSort("created_at")}>
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-                    תאריך <SortIcon column="created_at" />
+                    תאריך {renderSortIcon("created_at", sortKey, sortDir)}
                   </span>
                 </th>
                 <th></th>
@@ -288,6 +420,22 @@ export default function LeadsTable({ initialLeads }: { initialLeads: Lead[] }) {
                   <td>{new Date(lead.created_at).toLocaleDateString("he-IL")}</td>
                   <td>
                     <div className="cell-actions">
+                      <a
+                        className="abtn abtn-ghost abtn-sm"
+                        href={`tel:${lead.phone.replace(/[^\d+]/g, "")}`}
+                        title={`חיוג ל-${lead.name}`}
+                      >
+                        <IconPhoneCall />
+                      </a>
+                      <a
+                        className="abtn abtn-ghost abtn-sm"
+                        href={waLink(lead.phone)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={`וואטסאפ ל-${lead.name}`}
+                      >
+                        <WaIcon />
+                      </a>
                       <button
                         type="button"
                         className="abtn abtn-ghost abtn-sm"

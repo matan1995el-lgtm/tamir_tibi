@@ -27,6 +27,7 @@ export default async function AdminDashboardPage() {
     { label: 'סה"כ לידים', value: leadsTotal.count ?? 0, icon: IconInbox },
     { label: "שירותים פעילים", value: services.count ?? 0, icon: IconWrench },
     { label: "פריטי גלריה", value: gallery.count ?? 0, icon: IconGridIcon },
+    { label: "המלצות", value: testimonials.count ?? 0, icon: IconMessageStar },
   ];
 
   return (

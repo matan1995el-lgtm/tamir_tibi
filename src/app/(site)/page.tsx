@@ -1,7 +1,7 @@
 import Link from "next/link";
 import HeroScene, { LogoEmblem, GateDivider } from "@/components/HeroScene";
 import { QuoteButton } from "@/components/QuoteModal";
-import { getServices, getSiteSettings, getTestimonials } from "@/lib/site-data";
+import { getHomeContent, getServices, getSiteSettings, getTestimonials } from "@/lib/site-data";
 import { getServiceIcon } from "@/lib/service-icons";
 import { IconCheck, IconStar } from "@/components/Icons";
 import { ArtElectricGate, ArtRailing, ArtPergola, ArtPartition } from "@/components/PlaceholderArt";
@@ -26,10 +26,11 @@ const GALLERY_PREVIEW = [
 ];
 
 export default async function Home() {
-  const [services, settings, testimonials] = await Promise.all([
+  const [services, settings, testimonials, content] = await Promise.all([
     getServices(),
     getSiteSettings(),
     getTestimonials(),
+    getHomeContent(),
   ]);
 
   return (
@@ -39,15 +40,15 @@ export default async function Home() {
         <div className="container hero-content">
           <div className="hero-grid">
             <div className="reveal-stagger">
-              <span className="eyebrow">אלומיניום ומתכת בגימור פרימיום</span>
+              <span className="eyebrow">{content.hero_eyebrow || "אלומיניום ומתכת בגימור פרימיום"}</span>
               <h1>
-                Metaline — פתרונות אלומיניום ומתכת
+                {content.hero_title_main || "Metaline — פתרונות אלומיניום ומתכת ברמה"}
                 <br />
-                ברמה <span>אחרת</span>
+                <span>{content.hero_title_accent || "אחרת"}</span>
               </h1>
               <p className="lead">
-                שערים חשמליים, מעקות אלומיניום ופרגולות מתכת — מתוכננים
-                ומותקנים בדיוק, מהרעיון הראשוני ועד לגימור הסופי בשטח.
+                {content.hero_lead ||
+                  "שערים חשמליים, מעקות אלומיניום ופרגולות מתכת — מתוכננים ומותקנים בדיוק, מהרעיון הראשוני ועד לגימור הסופי בשטח."}
               </p>
               <div className="hero-actions">
                 <QuoteButton className="btn btn-gold">קבלו הצעת מחיר</QuoteButton>
@@ -165,7 +166,11 @@ export default async function Home() {
               <div className="about-ring a1" aria-hidden="true" />
               <div className="about-ring a2" aria-hidden="true" />
               <div className="about-core">
-                <img src="/brand/symbol-white.png" alt="Metaline" />
+                {content.about_image_url ? (
+                  <img src={content.about_image_url} alt="Metaline" style={{ objectFit: "cover", width: "100%", height: "100%", borderRadius: "50%" }} />
+                ) : (
+                  <img src="/brand/symbol-white.png" alt="Metaline" />
+                )}
               </div>
               <div className="about-badge">
                 <div className="n">{settings.projects_count ? `${settings.projects_count}+` : "[להשלמה]+"}</div>
@@ -175,11 +180,10 @@ export default async function Home() {
           </div>
           <div className="about-text">
             <span className="eyebrow">מי אנחנו</span>
-            <h2>דיוק, אמינות ועבודה שנשארת לאורך שנים</h2>
+            <h2>{content.about_title || "דיוק, אמינות ועבודה שנשארת לאורך שנים"}</h2>
             <p>
-              Metaline מתמחה בייצור והתקנה של שערים חשמליים, מעקות אלומיניום
-              ופרגולות מתכת בגימור פרימיום. אנחנו מלווים כל פרויקט מהמפגש
-              הראשון ועד הרגע שהשער נסגר בפעם הראשונה בבית שלכם.
+              {content.about_body ||
+                "Metaline מתמחה בייצור והתקנה של שערים חשמליים, מעקות אלומיניום ופרגולות מתכת בגימור פרימיום. אנחנו מלווים כל פרויקט מהמפגש הראשון ועד הרגע שהשער נסגר בפעם הראשונה בבית שלכם."}
             </p>
             <div className="about-points">
               <div className="about-point">
@@ -254,8 +258,8 @@ export default async function Home() {
         <div className="container cta-inner reveal-stagger">
           <div>
             <span className="eyebrow">מוכנים להתחיל?</span>
-            <h2>בואו נתכנן יחד את הפרויקט הבא שלכם</h2>
-            <p>השאירו פרטים ונחזור אליכם עם הצעת מחיר מותאמת אישית, ללא התחייבות.</p>
+            <h2>{content.cta_title || "בואו נתכנן יחד את הפרויקט הבא שלכם"}</h2>
+            <p>{content.cta_body || "השאירו פרטים ונחזור אליכם עם הצעת מחיר מותאמת אישית, ללא התחייבות."}</p>
           </div>
           <div className="cta-actions">
             <QuoteButton className="btn btn-gold">קבלו הצעת מחיר</QuoteButton>

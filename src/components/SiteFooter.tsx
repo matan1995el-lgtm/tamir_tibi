@@ -7,7 +7,7 @@ export default function SiteFooter({ settings }: { settings: SiteSettings }) {
       <div className="container footer-top">
         <div>
           <div className="footer-brand">
-            <img src="/brand/symbol-white.png" alt="Metaline" />
+            <img src={settings.logo_url || "/brand/symbol-white.png"} alt="Metaline" />
             <span>Metaline</span>
           </div>
           <p className="desc">
