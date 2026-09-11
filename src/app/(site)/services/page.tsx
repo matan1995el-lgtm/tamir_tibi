@@ -7,7 +7,9 @@ import { getServiceIcon } from "@/lib/service-icons";
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: "שירותים | Metaline",
+  // Root layout's title.template ("%s | Metaline") appends the brand —
+  // a literal "| Metaline" here would double it up.
+  title: "שירותים",
   description: "שערים חשמליים, מעקות אלומיניום, פרגולות ומחיצות מתכת, עיצוב, התקנה ותחזוקה — כל השירותים של Metaline.",
 };
 

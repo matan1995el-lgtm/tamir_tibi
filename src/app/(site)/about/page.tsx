@@ -7,8 +7,19 @@ import { getAboutContent, getSiteSettings } from "@/lib/site-data";
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: "אודות | Metaline",
+  // Just the page-specific part — the root layout's title.template
+  // ("%s | Metaline") appends the brand automatically. A literal
+  // "... | Metaline" here would double up into "... | Metaline | Metaline".
+  title: "אודות",
   description: "Metaline — פתרונות אלומיניום ומתכת בגימור פרימיום. הכירו את הסיפור, הערכים וצוות המומחים שלנו.",
+  // Deliberately NOT setting `openGraph` here: Next.js replaces the root
+  // layout's entire resolved openGraph object (title/image/siteName/
+  // locale/...) with whatever a child segment declares under this key —
+  // even a partial override drops the site-wide OG image once one is
+  // uploaded in the admin "SEO" screen. Leaving the key out entirely lets
+  // this page inherit the root's OG data unchanged (it'll show the
+  // site-wide title/image rather than this page's own — an acceptable
+  // trade-off for a page with no unique image of its own).
 };
 
 export default async function AboutPage() {

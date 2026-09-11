@@ -80,10 +80,14 @@ export default function SiteHeader({
           ☰
         </button>
       </div>
-      <div className={`mobile-nav${open ? " open" : ""}`}>
-        <button className="close-x" aria-label="סגירת תפריט" onClick={() => setOpen(false)}>
+      <div className={`mobile-nav${open ? " open" : ""}`} aria-hidden={!open}>
+        <button className="close-x" aria-label="סגירת תפריט" onClick={() => setOpen(false)} tabIndex={open ? 0 : -1}>
           ×
         </button>
+        <div className="mobile-nav-brand">
+          <img src={logoUrl || "/brand/symbol-white.png"} alt="Metaline" />
+          <span>Metaline</span>
+        </div>
         {navItems.map((n) => (
           <Link
             key={n.id}

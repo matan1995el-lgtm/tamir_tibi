@@ -121,16 +121,14 @@ export default async function Home() {
               const Icon = getServiceIcon(s.icon);
               return (
                 <div className="tilt-wrap" key={s.id}>
-                  <div className="svc-card">
+                  <Link href={`/services/${s.slug}`} className="svc-card">
                     <div className="svc-icon">
                       <Icon />
                     </div>
                     <h3>{s.title}</h3>
                     <p>{s.description}</p>
-                    <Link href={`/services/${s.slug}`} className="svc-link">
-                      למידע נוסף ←
-                    </Link>
-                  </div>
+                    <span className="svc-link">למידע נוסף ←</span>
+                  </Link>
                 </div>
               );
             })}

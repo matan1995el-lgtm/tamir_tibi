@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { GateDivider } from "@/components/HeroScene";
 import { QuoteButton } from "@/components/QuoteModal";
-import { getServiceBySlug, getServices } from "@/lib/site-data";
+import { getServiceBySlug, getServices, getSeoSettings } from "@/lib/site-data";
 import { getServiceIcon } from "@/lib/service-icons";
 import { IconCheck } from "@/components/Icons";
 
@@ -178,9 +178,31 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const service = await getServiceBySlug(slug);
   if (!service) return {};
+  // Just the page-specific part for the <title> tag — the root layout's
+  // title.template ("%s | Metaline") appends the brand automatically.
+  // og:title has no such template, so it gets the full branded string.
+  const pageTitle = service.title;
+  const fullTitle = `${service.title} | Metaline`;
+  const description = service.description ?? undefined;
+  const seo = await getSeoSettings();
   return {
-    title: `${service.title} | Metaline`,
-    description: service.description ?? undefined,
+    title: pageTitle,
+    description,
+    // Always set our own openGraph title/description (rather than leaving
+    // the key out entirely, or setting it to `undefined`) so this page's
+    // specific title/description show up in link previews instead of the
+    // site-wide default. Next.js treats any segment that mentions the
+    // `openGraph` key at all — even as `undefined` — as replacing the
+    // parent's resolved value, so the previous `openGraph: x ? {...} :
+    // undefined` pattern was silently wiping out the root layout's OG
+    // image/siteName/locale on every service page. Services have no image
+    // field of their own yet, so this falls back to the site-wide default
+    // OG image (admin "SEO" screen) when one is set.
+    openGraph: {
+      title: fullTitle,
+      description,
+      ...(seo.default_og_image_url ? { images: [seo.default_og_image_url] } : {}),
+    },
   };
 }
 

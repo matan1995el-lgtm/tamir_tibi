@@ -237,6 +237,169 @@ export async function getSiteTheme(): Promise<SiteTheme> {
   };
 }
 
+// --- Content blocks: the shared building block for both custom pages and
+// blog posts (admin "עמודים" and "בלוג" screens). A small fixed set of
+// block types keeps editing reliable (no freeform HTML/canvas to break),
+// while the ordered array still lets an editor compose and reorder a page
+// visually — a deliberate middle ground between a plain rich-text field
+// and a full drag-and-drop page builder. ------------------------------
+
+export type ContentBlock =
+  | { type: "heading"; text: string; level: 2 | 3 }
+  | { type: "paragraph"; text: string }
+  | { type: "image"; url: string; alt: string }
+  | { type: "button"; text: string; href: string }
+  | { type: "spacer"; height: number };
+
+function parseBlocks(raw: unknown): ContentBlock[] {
+  if (!Array.isArray(raw)) return [];
+  return raw as ContentBlock[];
+}
+
+// --- Custom pages (admin "עמודים" screen) ---------------------------------
+
+export type CustomPage = {
+  id: string;
+  slug: string;
+  title: string;
+  blocks: ContentBlock[];
+  seo_title: string | null;
+  seo_description: string | null;
+  og_image_url: string | null;
+  published: boolean;
+  updated_at: string;
+};
+
+// Path segments already used by a real file-based route — a custom page
+// can never take one of these slugs (enforced in the admin form too).
+export const RESERVED_SLUGS = [
+  "about", "services", "gallery", "contact", "accessibility", "privacy",
+  "cookies", "blog", "admin", "api",
+];
+
+export async function getPublishedCustomPages(): Promise<CustomPage[]> {
+  const { data, error } = await supabase
+    .from("custom_pages")
+    .select("id, slug, title, blocks, seo_title, seo_description, og_image_url, published, updated_at")
+    .eq("published", true);
+  if (error || !data) return [];
+  return data.map((p) => ({ ...p, blocks: parseBlocks(p.blocks) }));
+}
+
+export async function getCustomPageBySlug(slug: string): Promise<CustomPage | null> {
+  const { data, error } = await supabase
+    .from("custom_pages")
+    .select("id, slug, title, blocks, seo_title, seo_description, og_image_url, published, updated_at")
+    .eq("slug", slug)
+    .eq("published", true)
+    .maybeSingle();
+  if (error || !data) return null;
+  return { ...data, blocks: parseBlocks(data.blocks) };
+}
+
+// --- Blog (admin "בלוג" screen) --------------------------------------------
+
+export type BlogPost = {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  cover_image_url: string | null;
+  blocks: ContentBlock[];
+  category: string | null;
+  tags: string[];
+  author_name: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
+  published: boolean;
+  published_at: string | null;
+  updated_at: string;
+};
+
+const BLOG_LIST_FIELDS = "id, slug, title, excerpt, cover_image_url, category, tags, author_name, published, published_at, updated_at";
+const BLOG_FULL_FIELDS = `${BLOG_LIST_FIELDS}, blocks, seo_title, seo_description`;
+
+export async function getPublishedBlogPosts(): Promise<BlogPost[]> {
+  const { data, error } = await supabase
+    .from("blog_posts")
+    .select(BLOG_LIST_FIELDS)
+    .eq("published", true)
+    .order("published_at", { ascending: false });
+  if (error || !data) return [];
+  return (data as Omit<BlogPost, "blocks" | "seo_title" | "seo_description">[]).map((p) => ({
+    ...p,
+    blocks: [],
+    seo_title: null,
+    seo_description: null,
+  }));
+}
+
+export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> {
+  const { data, error } = await supabase
+    .from("blog_posts")
+    .select(BLOG_FULL_FIELDS)
+    .eq("slug", slug)
+    .eq("published", true)
+    .maybeSingle();
+  if (error || !data) return null;
+  return { ...data, blocks: parseBlocks(data.blocks) };
+}
+
+// --- Site-wide SEO defaults (admin "SEO" screen) ---------------------------
+
+export type SeoSettings = {
+  default_meta_title: string | null;
+  default_meta_description: string | null;
+  default_og_image_url: string | null;
+  google_site_verification: string | null;
+  robots_index: boolean;
+};
+
+const DEFAULT_SEO: SeoSettings = {
+  default_meta_title: null,
+  default_meta_description: null,
+  default_og_image_url: null,
+  google_site_verification: null,
+  robots_index: true,
+};
+
+export async function getSeoSettings(): Promise<SeoSettings> {
+  const { data, error } = await supabase
+    .from("seo_settings")
+    .select("default_meta_title, default_meta_description, default_og_image_url, google_site_verification, robots_index")
+    .eq("id", 1)
+    .maybeSingle();
+  if (error || !data) return DEFAULT_SEO;
+  return data as SeoSettings;
+}
+
+// --- Admin roles ------------------------------------------------------------
+
+export type AdminRole = "owner" | "marketing" | "designer" | "seo";
+
+export const ADMIN_ROLE_LABELS: Record<AdminRole, string> = {
+  owner: "בעלים",
+  marketing: "שיווק",
+  designer: "מעצב/ת",
+  seo: "SEO",
+};
+
+// Which admin nav sections + mutations each role may use. "owner" is
+// always implicitly allowed everywhere on top of what's listed here — the
+// real enforcement is the matching Postgres RLS policy (see
+// supabase/schema.sql); this map only drives which nav links/buttons the
+// UI shows, so a role never sees a control it isn't allowed to use.
+export const ROLE_SECTIONS: Record<Exclude<AdminRole, "owner">, string[]> = {
+  marketing: ["content", "pages", "blog", "leads", "services", "gallery", "testimonials", "pricing"],
+  designer: ["content", "pages", "design", "services", "gallery", "menu"],
+  seo: ["blog", "seo"],
+};
+
+export function roleCanAccess(role: AdminRole, section: string): boolean {
+  if (role === "owner") return true;
+  return ROLE_SECTIONS[role]?.includes(section) ?? false;
+}
+
 export async function getNavMenuItems(): Promise<NavMenuItem[]> {
   const { data, error } = await supabase
     .from("nav_menu_items")

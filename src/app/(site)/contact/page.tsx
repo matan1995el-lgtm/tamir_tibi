@@ -14,7 +14,9 @@ function buildWaLink(raw: string): string {
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: "צור קשר | Metaline",
+  // Root layout's title.template ("%s | Metaline") appends the brand —
+  // a literal "| Metaline" here would double it up.
+  title: "צור קשר",
   description: "השאירו פרטים ונחזור אליכם עם הצעת מחיר מותאמת אישית לשער חשמלי, מעקה אלומיניום, פרגולה או מחיצת מתכת.",
 };
 

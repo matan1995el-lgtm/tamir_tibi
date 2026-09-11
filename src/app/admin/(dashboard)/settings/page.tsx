@@ -1,10 +1,12 @@
 import { createClient } from "@/lib/supabase-server";
+import { requireAdminAccess } from "@/lib/admin-auth";
 import AdminTopbar from "@/components/admin/AdminTopbar";
 import SettingsForm from "@/components/admin/SettingsForm";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminSettingsPage() {
+  await requireAdminAccess({ ownerOnly: true });
   const supabase = await createClient();
 
   const { data: settings } = await supabase

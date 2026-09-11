@@ -17,25 +17,41 @@ import {
   IconX,
   IconEdit,
   IconPalette,
+  IconLayers,
+  IconNewspaper,
+  IconSearch,
+  IconUsers,
 } from "@/components/Icons";
+import { ADMIN_ROLE_LABELS, roleCanAccess, type AdminRole } from "@/lib/site-data";
 
 const NAV = [
-  { href: "/admin", label: "לוח בקרה", icon: IconDashboard, exact: true },
-  { href: "/admin/content", label: "תוכן עמודים", icon: IconEdit },
-  { href: "/admin/design", label: "עיצוב", icon: IconPalette },
-  { href: "/admin/leads", label: "לידים", icon: IconInbox },
-  { href: "/admin/services", label: "שירותים", icon: IconWrench },
-  { href: "/admin/gallery", label: "גלריה", icon: IconGridIcon },
-  { href: "/admin/testimonials", label: "המלצות", icon: IconMessageStar },
-  { href: "/admin/pricing", label: "מחירון", icon: IconSliders },
-  { href: "/admin/menu", label: "תפריט ניווט", icon: IconMenu },
-  { href: "/admin/settings", label: "הגדרות", icon: IconSettingsGear },
-];
+  { href: "/admin", label: "לוח בקרה", icon: IconDashboard, exact: true, section: null },
+  { href: "/admin/content", label: "תוכן עמודים", icon: IconEdit, section: "content" },
+  { href: "/admin/pages", label: "עמודים", icon: IconLayers, section: "pages" },
+  { href: "/admin/blog", label: "בלוג", icon: IconNewspaper, section: "blog" },
+  { href: "/admin/design", label: "עיצוב", icon: IconPalette, section: "design" },
+  { href: "/admin/seo", label: "SEO", icon: IconSearch, section: "seo" },
+  { href: "/admin/leads", label: "לידים", icon: IconInbox, section: "leads" },
+  { href: "/admin/services", label: "שירותים", icon: IconWrench, section: "services" },
+  { href: "/admin/gallery", label: "גלריה", icon: IconGridIcon, section: "gallery" },
+  { href: "/admin/testimonials", label: "המלצות", icon: IconMessageStar, section: "testimonials" },
+  { href: "/admin/pricing", label: "מחירון", icon: IconSliders, section: "pricing" },
+  { href: "/admin/menu", label: "תפריט ניווט", icon: IconMenu, section: "menu" },
+  { href: "/admin/users", label: "משתמשים", icon: IconUsers, section: null, ownerOnly: true },
+  { href: "/admin/settings", label: "הגדרות", icon: IconSettingsGear, section: null, ownerOnly: true },
+] as const;
 
-export default function AdminSidebar({ email }: { email: string }) {
+export default function AdminSidebar({ email, role }: { email: string; role: AdminRole }) {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+
+  const visibleNav = NAV.filter((item) => {
+    if (role === "owner") return true;
+    if ("ownerOnly" in item && item.ownerOnly) return false;
+    if (item.section === null) return true; // dashboard — everyone with panel access sees it
+    return roleCanAccess(role, item.section);
+  });
 
   async function logout() {
     const supabase = createClient();
@@ -69,8 +85,8 @@ export default function AdminSidebar({ email }: { email: string }) {
           </button>
         </div>
         <nav className="admin-nav">
-          {NAV.map((item) => {
-            const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
+          {visibleNav.map((item) => {
+            const active = "exact" in item && item.exact ? pathname === item.href : pathname.startsWith(item.href);
             return (
               <Link
                 key={item.href}
@@ -85,7 +101,10 @@ export default function AdminSidebar({ email }: { email: string }) {
           })}
         </nav>
         <div className="admin-sidebar-foot">
-          <div className="who">{email}</div>
+          <div className="who">
+            <span>{email}</span>
+            <span className={`role-badge role-badge-${role}`}>{ADMIN_ROLE_LABELS[role]}</span>
+          </div>
           <button className="admin-logout-btn" onClick={logout}>
             <IconLogout /> יציאה
           </button>

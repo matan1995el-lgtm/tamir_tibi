@@ -1,10 +1,12 @@
 import { createClient } from "@/lib/supabase-server";
+import { requireAdminAccess } from "@/lib/admin-auth";
 import AdminTopbar from "@/components/admin/AdminTopbar";
 import LeadsTable, { type Lead } from "@/components/admin/LeadsTable";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminLeadsPage() {
+  await requireAdminAccess({ section: "leads" });
   const supabase = await createClient();
 
   const { data: leads } = await supabase

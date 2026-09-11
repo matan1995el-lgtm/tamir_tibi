@@ -61,25 +61,26 @@ export default function SiteFooter({ settings }: { settings: SiteSettings }) {
         <Link href="/cookies">שימוש בעוגיות</Link>
       </div>
 
-      <div className="container footer-bottom">
-        <span>© {new Date().getFullYear()} Metaline. כל הזכויות שמורות.</span>
-        <div className="footer-social">
-          {settings.facebook_url && (
-            <a href={settings.facebook_url} target="_blank" rel="noopener noreferrer" aria-label="Facebook">
-              <svg viewBox="0 0 24 24" fill="#fff"><path d="M13.5 21v-8h2.7l.4-3.1h-3.1V8c0-.9.25-1.5 1.55-1.5H17V3.7C16.6 3.65 15.5 3.5 14.2 3.5c-2.7 0-4.5 1.65-4.5 4.65V10H7v3.1h2.7V21h3.8Z"/></svg>
-            </a>
-          )}
-          {settings.instagram_url && (
-            <a href={settings.instagram_url} target="_blank" rel="noopener noreferrer" aria-label="Instagram">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.6"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="3.8"/><circle cx="17.2" cy="6.8" r="1"/></svg>
-            </a>
-          )}
+      {(settings.facebook_url || settings.instagram_url) && (
+        <div className="container footer-social-row">
+          <div className="footer-social">
+            {settings.facebook_url && (
+              <a href={settings.facebook_url} target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+                <svg viewBox="0 0 24 24" fill="#fff"><path d="M13.5 21v-8h2.7l.4-3.1h-3.1V8c0-.9.25-1.5 1.55-1.5H17V3.7C16.6 3.65 15.5 3.5 14.2 3.5c-2.7 0-4.5 1.65-4.5 4.65V10H7v3.1h2.7V21h3.8Z"/></svg>
+              </a>
+            )}
+            {settings.instagram_url && (
+              <a href={settings.instagram_url} target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.6"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="3.8"/><circle cx="17.2" cy="6.8" r="1"/></svg>
+              </a>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
-      <div className="container footer-credit">
+      <div className="container footer-bottom">
         <span>
-          אתר הוקם, עוצב ואופיין ע&quot;י{" "}
+          © {new Date().getFullYear()} Metaline. כל הזכויות שמורות. אתר הוקם, עוצב ואופיין ע&quot;י{" "}
           <a href="https://www.panda-il.com" target="_blank" rel="noopener noreferrer">
             פנדה סוכנות דיגיטל
           </a>

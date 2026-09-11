@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase-browser";
 
 // Reached from the "reset your password" email link. @supabase/ssr's
@@ -85,9 +86,9 @@ export default function ResetPasswordPage() {
             <p style={{ fontSize: 14.5, color: "var(--muted)", lineHeight: 1.6 }}>
               קישור האיפוס אינו תקף או שפג תוקפו. אפשר לבקש קישור חדש ממסך הכניסה.
             </p>
-            <a href="/admin/login" className="btn btn-ghost" style={{ marginTop: 8, textAlign: "center" }}>
+            <Link href="/admin/login" className="btn btn-ghost" style={{ marginTop: 8, textAlign: "center" }}>
               חזרה למסך כניסה
-            </a>
+            </Link>
           </>
         ) : done ? (
           <p style={{ fontSize: 14.5, color: "var(--muted)", lineHeight: 1.6 }}>

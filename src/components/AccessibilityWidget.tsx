@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 type A11yState = {
   fontScale: 0 | 1 | 2 | 3;
@@ -193,7 +194,7 @@ export default function AccessibilityWidget() {
 
             <p className="a11y-panel-foot">
               לפרטים נוספים ראו את{" "}
-              <a href="/accessibility">הצהרת הנגישות</a> שלנו.
+              <Link href="/accessibility">הצהרת הנגישות</Link> שלנו.
             </p>
           </div>
         </>

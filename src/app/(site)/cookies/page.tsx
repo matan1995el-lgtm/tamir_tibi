@@ -5,7 +5,9 @@ import { getSiteSettings } from "@/lib/site-data";
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: "מדיניות עוגיות | Metaline",
+  // Root layout's title.template ("%s | Metaline") appends the brand —
+  // a literal "| Metaline" here would double it up.
+  title: "מדיניות עוגיות",
   description: "מדיניות השימוש בעוגיות (Cookies) באתר Metaline.",
 };
 

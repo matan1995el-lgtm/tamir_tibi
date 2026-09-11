@@ -34,6 +34,7 @@ import "@fontsource/assistant/hebrew-800.css";
 import "@fontsource/secular-one/latin-400.css";
 import "@fontsource/secular-one/hebrew-400.css";
 import "./globals.css";
+import { getSeoSettings } from "@/lib/site-data";
 
 // NEXT_PUBLIC_SITE_URL should be set to the site's real production domain
 // once one is assigned (see .env.example) — it's what makes shared-link
@@ -41,19 +42,56 @@ import "./globals.css";
 // correctly. Falls back to a placeholder so the build never breaks without it.
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://example.com";
 
-export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
-  title: {
-    default: "Metaline — פתרונות אלומיניום ומתכת ברמה אחרת",
-    template: "%s | Metaline",
-  },
-  description:
-    "Metaline מתמחה בייצור והתקנה של שערים חשמליים, מעקות אלומיניום, פרגולות ומחיצות מתכת בגימור פרימיום. עבודה מדויקת, חומרים איכותיים, ליווי מקצועי מהתכנון ועד ההתקנה.",
-  icons: {
-    icon: "/favicon.ico",
-    apple: "/apple-touch-icon.png",
-  },
-};
+const DEFAULT_TITLE = "Metaline — פתרונות אלומיניום ומתכת ברמה אחרת";
+const DEFAULT_DESCRIPTION =
+  "Metaline מתמחה בייצור והתקנה של שערים חשמליים, מעקות אלומיניום, פרגולות ומחיצות מתכת בגימור פרימיום. עבודה מדויקת, חומרים איכותיים, ליווי מקצועי מהתכנון ועד ההתקנה.";
+
+// Site-wide SEO defaults (title/description/OG image/Google verification)
+// are editable in the admin panel's "SEO" screen — fetched here so the
+// root layout's metadata always reflects the latest saved values without
+// a redeploy (same ISR window as the rest of the public site).
+export const revalidate = 60;
+
+export async function generateMetadata(): Promise<Metadata> {
+  const seo = await getSeoSettings();
+  const title = seo.default_meta_title || DEFAULT_TITLE;
+  const description = seo.default_meta_description || DEFAULT_DESCRIPTION;
+  return {
+    metadataBase: new URL(SITE_URL),
+    title: {
+      default: title,
+      template: "%s | Metaline",
+    },
+    description,
+    alternates: {
+      canonical: "/",
+    },
+    icons: {
+      icon: "/favicon.ico",
+      apple: "/apple-touch-icon.png",
+    },
+    // Always emit OG/Twitter tags — even without an uploaded OG image —
+    // so WhatsApp/Facebook/Google link previews show at least a title +
+    // description card instead of nothing. Once a real image is uploaded
+    // in the admin "SEO" screen it's added on top, never fabricated here.
+    openGraph: {
+      title,
+      description,
+      url: "/",
+      siteName: "Metaline",
+      locale: "he_IL",
+      type: "website",
+      ...(seo.default_og_image_url ? { images: [seo.default_og_image_url] } : {}),
+    },
+    twitter: {
+      card: seo.default_og_image_url ? "summary_large_image" : "summary",
+      title,
+      description,
+      ...(seo.default_og_image_url ? { images: [seo.default_og_image_url] } : {}),
+    },
+    verification: seo.google_site_verification ? { google: seo.google_site_verification } : undefined,
+  };
+}
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (

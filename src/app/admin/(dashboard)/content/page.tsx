@@ -1,10 +1,12 @@
 import { createClient } from "@/lib/supabase-server";
+import { requireAdminAccess } from "@/lib/admin-auth";
 import AdminTopbar from "@/components/admin/AdminTopbar";
 import PageContentManager from "@/components/admin/PageContentManager";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminContentPage() {
+  await requireAdminAccess({ section: "content" });
   const supabase = await createClient();
 
   const { data } = await supabase.from("page_content").select("page, data");

@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { GateDivider } from "@/components/HeroScene";
 import { getSiteSettings } from "@/lib/site-data";
 
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: "מדיניות פרטיות | Metaline",
+  // Root layout's title.template ("%s | Metaline") appends the brand —
+  // a literal "| Metaline" here would double it up.
+  title: "מדיניות פרטיות",
   description: "מדיניות הפרטיות של אתר Metaline — כיצד אנו אוספים, משתמשים ושומרים על המידע שלכם.",
 };
 
@@ -48,7 +51,7 @@ export default async function PrivacyPage() {
               <strong>מידע טכני הנאסף אוטומטית</strong> — כמקובל באתרי אינטרנט, בעת הגלישה באתר ייתכן שיאסף
               מידע טכני בסיסי כגון סוג הדפדפן והמכשיר, כתובת IP, מערכת ההפעלה, עמודי האתר בהם ביקרתם ומשך
               הביקור, לרבות באמצעות עוגיות (Cookies) — כמפורט ב
-              <a href="/cookies">מדיניות השימוש בעוגיות</a> הנפרדת.
+              <Link href="/cookies">מדיניות השימוש בעוגיות</Link> הנפרדת.
             </li>
           </ul>
           <p>

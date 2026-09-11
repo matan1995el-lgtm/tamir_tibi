@@ -5,7 +5,9 @@ import { getSiteSettings } from "@/lib/site-data";
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: "הצהרת נגישות | Metaline",
+  // Root layout's title.template ("%s | Metaline") appends the brand —
+  // a literal "| Metaline" here would double it up.
+  title: "הצהרת נגישות",
   description: "הצהרת הנגישות של אתר Metaline ופרטי יצירת קשר בנושאי נגישות.",
 };
 

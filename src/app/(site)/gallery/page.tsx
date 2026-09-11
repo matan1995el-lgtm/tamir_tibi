@@ -8,7 +8,9 @@ import GalleryClient from "./GalleryClient";
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: "גלריית פרויקטים | Metaline",
+  // Root layout's title.template ("%s | Metaline") appends the brand —
+  // a literal "| Metaline" here would double it up.
+  title: "גלריית פרויקטים",
   description: "פרויקטים נבחרים של שערים חשמליים, מעקות אלומיניום, פרגולות ומחיצות מתכת מבית Metaline.",
 };
 

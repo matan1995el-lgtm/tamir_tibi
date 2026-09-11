@@ -385,6 +385,37 @@ export function IconPalette({ className }: P) {
   );
 }
 
+export function IconUsers({ className }: P) {
+  return (
+    <svg className={className} viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <circle cx="7" cy="6.5" r="2.6" />
+      <path d="M2.2 16.5c.6-3 2.4-4.5 4.8-4.5s4.2 1.5 4.8 4.5" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="14.5" cy="7.2" r="2.1" />
+      <path d="M12.8 11.6c1.9-.35 3.55.7 4.9 4.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function IconLayers({ className }: P) {
+  return (
+    <svg className={className} viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <path d="M10 2.5 17.5 7 10 11.5 2.5 7 10 2.5Z" strokeLinejoin="round" />
+      <path d="M2.5 11 10 15.5 17.5 11" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M2.5 14.8 10 19.3l7.5-4.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function IconNewspaper({ className }: P) {
+  return (
+    <svg className={className} viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <path d="M3 3.5h11a1.5 1.5 0 0 1 1.5 1.5v10.5H4.5A1.5 1.5 0 0 1 3 14V3.5Z" strokeLinejoin="round" />
+      <path d="M15.5 15.5A1.5 1.5 0 0 0 17 14V6.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M5.5 6.5h6M5.5 9h6M5.5 11.5h3.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function IconInboxEmpty({ className }: P) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4">
