@@ -3,16 +3,16 @@ import HeroScene, { LogoEmblem, GateDivider } from "@/components/HeroScene";
 import { QuoteButton } from "@/components/QuoteModal";
 import { getHomeContent, getServices, getSiteSettings, getTestimonials } from "@/lib/site-data";
 import { getServiceIcon } from "@/lib/service-icons";
-import { IconCheck, IconStar } from "@/components/Icons";
+import { IconCheck, IconStar, IconConsult, IconDesign, IconInstallation, IconQuality } from "@/components/Icons";
 import { ArtElectricGate, ArtRailing, ArtPergola, ArtPartition } from "@/components/PlaceholderArt";
 
 export const revalidate = 60;
 
 const PROCESS = [
-  { n: "01", title: "פנייה וייעוץ ראשוני", desc: "יוצרים קשר, מבינים את הצורך שלכם ומתאמים בדיקת שטח ללא התחייבות." },
-  { n: "02", title: "תכנון והדמיה", desc: "מתאימים את הפתרון בדיוק לחלל שלכם — מידות, גימור וסגנון לבחירתכם." },
-  { n: "03", title: "ייצור והתקנה מקצועית", desc: "ייצור מדויק והתקנה נקייה בשטח, בליווי צוות מנוסה מתחילת היום ועד סופו." },
-  { n: "04", title: "אחריות ותמיכה", desc: "אחריות מלאה ותמיכה טכנית זמינה גם אחרי ההתקנה, לאורך שנות השימוש." },
+  { n: "01", title: "פנייה וייעוץ ראשוני", desc: "יוצרים קשר, מבינים את הצורך שלכם ומתאמים בדיקת שטח ללא התחייבות.", Icon: IconConsult },
+  { n: "02", title: "תכנון והדמיה", desc: "מתאימים את הפתרון בדיוק לחלל שלכם — מידות, גימור וסגנון לבחירתכם.", Icon: IconDesign },
+  { n: "03", title: "ייצור והתקנה מקצועית", desc: "ייצור מדויק והתקנה נקייה בשטח, בליווי צוות מנוסה מתחילת היום ועד סופו.", Icon: IconInstallation },
+  { n: "04", title: "אחריות ותמיכה", desc: "אחריות מלאה ותמיכה טכנית זמינה גם אחרי ההתקנה, לאורך שנות השימוש.", Icon: IconQuality },
 ];
 
 // Category tiles on the homepage link out to a filtered gallery view — the
@@ -138,23 +138,41 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="section compare">
+      <section className="section process-section">
         <div className="container">
           <div className="sec-head reveal">
             <span className="eyebrow">איך זה עובד</span>
             <h2>מהפנייה הראשונה ועד השער הסגור בבית שלכם</h2>
             <p>תהליך ברור ומסודר בארבעה שלבים — כדי שתדעו בדיוק למה לצפות בכל שלב בדרך.</p>
           </div>
-          <div className="cmp-grid reveal-stagger">
-            {PROCESS.map((c) => (
-              <div className="cmp-wrap" key={c.n}>
-                <div className="cmp-card">
-                  <div className="cmp-num">{c.n}</div>
-                  <h4>{c.title}</h4>
-                  <p>{c.desc}</p>
-                </div>
-              </div>
-            ))}
+
+          <div className="process-stage">
+            <div className="process-track reveal" aria-hidden="true">
+              <div className="process-track-fill" />
+              {[0, 1, 2, 3].map((i) => (
+                <span key={i} className="process-track-dot" style={{ insetInlineStart: `${(i / 3) * 100}%` }} />
+              ))}
+            </div>
+            <div className="process-grid reveal-stagger">
+              {PROCESS.map((c) => {
+                const Icon = c.Icon;
+                return (
+                  <div className="tilt-wrap process-wrap" key={c.n}>
+                    <div className="process-card">
+                      <span className="process-card-sheen" aria-hidden="true" />
+                      <div className="process-num-3d" aria-hidden="true">
+                        <span>{c.n}</span>
+                      </div>
+                      <div className="process-icon">
+                        <Icon />
+                      </div>
+                      <h4>{c.title}</h4>
+                      <p>{c.desc}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </section>

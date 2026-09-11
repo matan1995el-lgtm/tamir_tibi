@@ -1,8 +1,15 @@
 import type { Metadata } from "next";
 import ContactForm from "@/components/ContactForm";
-import { IconPhone, IconMail, IconPin, IconClock } from "@/components/Icons";
+import { IconPhone, IconMail, IconPin, IconClock, IconWhatsapp, IconPhoneCall } from "@/components/Icons";
 import { GateDivider } from "@/components/HeroScene";
 import { formatContactFallback, getContactContent, getSiteSettings } from "@/lib/site-data";
+
+function buildWaLink(raw: string): string {
+  const digits = raw.replace(/[^\d]/g, "");
+  if (digits.startsWith("972")) return `https://wa.me/${digits}`;
+  if (digits.startsWith("0")) return `https://wa.me/972${digits.slice(1)}`;
+  return `https://wa.me/${digits}`;
+}
 
 export const revalidate = 60;
 
@@ -75,6 +82,50 @@ export default async function ContactPage() {
                 <p className={settings.hours ? undefined : "placeholder"} style={{ whiteSpace: "pre-line" }}>
                   {settings.hours ?? "[להשלמה: שעות פעילות]"}
                 </p>
+              </div>
+            </div>
+
+            <div className="contact-quick">
+              <h4>או פנו אלינו ישירות</h4>
+              <div className="contact-quick-row">
+                {settings.whatsapp ? (
+                  <a
+                    className="cq-item cq-wa"
+                    href={buildWaLink(settings.whatsapp)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <IconWhatsapp />
+                    <span>וואטסאפ</span>
+                  </a>
+                ) : (
+                  <span className="cq-item cq-disabled" title="מספר וואטסאפ טרם הוזן">
+                    <IconWhatsapp />
+                    <span>וואטסאפ</span>
+                  </span>
+                )}
+                {settings.phone ? (
+                  <a className="cq-item cq-call" href={`tel:${settings.phone.replace(/[^\d+]/g, "")}`}>
+                    <IconPhoneCall />
+                    <span>חייגו עכשיו</span>
+                  </a>
+                ) : (
+                  <span className="cq-item cq-disabled" title="מספר טלפון טרם הוזן">
+                    <IconPhoneCall />
+                    <span>חייגו עכשיו</span>
+                  </span>
+                )}
+                {settings.email ? (
+                  <a className="cq-item cq-mail" href={`mailto:${settings.email}`}>
+                    <IconMail />
+                    <span>שלחו מייל</span>
+                  </a>
+                ) : (
+                  <span className="cq-item cq-disabled" title="כתובת מייל טרם הוזנה">
+                    <IconMail />
+                    <span>שלחו מייל</span>
+                  </span>
+                )}
               </div>
             </div>
           </div>

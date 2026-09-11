@@ -3,14 +3,19 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { QuoteButton } from "@/components/QuoteModal";
+import { IconFacebook, IconInstagram } from "@/components/Icons";
 import type { NavMenuItem } from "@/lib/site-data";
 
 export default function SiteHeader({
   navItems,
   logoUrl,
+  facebookUrl,
+  instagramUrl,
 }: {
   navItems: NavMenuItem[];
   logoUrl?: string | null;
+  facebookUrl?: string | null;
+  instagramUrl?: string | null;
 }) {
   const [solid, setSolid] = useState(false);
   const [open, setOpen] = useState(false);
@@ -51,6 +56,20 @@ export default function SiteHeader({
           ))}
         </nav>
         <div className="header-cta">
+          {(facebookUrl || instagramUrl) && (
+            <div className="header-social">
+              {facebookUrl && (
+                <a href={facebookUrl} target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+                  <IconFacebook />
+                </a>
+              )}
+              {instagramUrl && (
+                <a href={instagramUrl} target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                  <IconInstagram />
+                </a>
+              )}
+            </div>
+          )}
           <QuoteButton className="btn btn-gold">קבלו הצעת מחיר</QuoteButton>
         </div>
         <button
@@ -79,6 +98,20 @@ export default function SiteHeader({
         <QuoteButton className="btn btn-gold" style={{ marginTop: 20 }} onOpen={() => setOpen(false)}>
           קבלו הצעת מחיר
         </QuoteButton>
+        {(facebookUrl || instagramUrl) && (
+          <div className="header-social mobile">
+            {facebookUrl && (
+              <a href={facebookUrl} target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+                <IconFacebook />
+              </a>
+            )}
+            {instagramUrl && (
+              <a href={instagramUrl} target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                <IconInstagram />
+              </a>
+            )}
+          </div>
+        )}
       </div>
     </header>
   );
