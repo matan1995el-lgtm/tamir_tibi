@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useQuoteModal } from "@/components/QuoteModal";
+import { IconFacebook, IconInstagram } from "@/components/Icons";
+import { sanitizeHref } from "@/lib/link-safety";
 
 function buildWaLink(raw: string): string {
   // Normalize an Israeli number (05X-XXXXXXX, 972-..., +972-...) into a
@@ -44,16 +46,24 @@ export default function WhatsAppFab({
   whatsapp,
   phone,
   email,
+  facebookUrl,
+  instagramUrl,
 }: {
   whatsapp: string | null;
   phone: string | null;
   email: string | null;
+  /** Both edited from the admin panel's "הגדרות" screen, same source as
+   * the header/footer social icons — never hardcoded here. */
+  facebookUrl?: string | null;
+  instagramUrl?: string | null;
 }) {
   const { open: openQuoteModal } = useQuoteModal();
   const [open, setOpen] = useState(false);
   const hasWhatsapp = !!whatsapp && whatsapp.trim().length > 0;
   const hasPhone = !!phone && phone.trim().length > 0;
   const hasEmail = !!email && email.trim().length > 0;
+  const hasFacebook = !!facebookUrl && facebookUrl.trim().length > 0;
+  const hasInstagram = !!instagramUrl && instagramUrl.trim().length > 0;
 
   useEffect(() => {
     if (!open) return;
@@ -142,6 +152,50 @@ export default function WhatsAppFab({
                 <span className="qa-ic">{FORM_ICON}</span>
                 <span>טופס פנייה</span>
               </button>
+
+              {hasFacebook ? (
+                <a
+                  className="qa-item qa-fb"
+                  href={sanitizeHref(facebookUrl)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setOpen(false)}
+                >
+                  <span className="qa-ic">
+                    <IconFacebook />
+                  </span>
+                  <span>פייסבוק</span>
+                </a>
+              ) : (
+                <span className="qa-item qa-disabled" title="קישור לפייסבוק טרם הוזן">
+                  <span className="qa-ic">
+                    <IconFacebook />
+                  </span>
+                  <span>פייסבוק</span>
+                </span>
+              )}
+
+              {hasInstagram ? (
+                <a
+                  className="qa-item qa-ig"
+                  href={sanitizeHref(instagramUrl)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setOpen(false)}
+                >
+                  <span className="qa-ic">
+                    <IconInstagram />
+                  </span>
+                  <span>אינסטגרם</span>
+                </a>
+              ) : (
+                <span className="qa-item qa-disabled" title="קישור לאינסטגרם טרם הוזן">
+                  <span className="qa-ic">
+                    <IconInstagram />
+                  </span>
+                  <span>אינסטגרם</span>
+                </span>
+              )}
             </div>
           </div>
         </>

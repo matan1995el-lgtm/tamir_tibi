@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { QuoteButton } from "@/components/QuoteModal";
 import { IconFacebook, IconInstagram } from "@/components/Icons";
+import { sanitizeHref } from "@/lib/link-safety";
 import type { NavMenuItem } from "@/lib/site-data";
 
 export default function SiteHeader({
@@ -45,12 +47,12 @@ export default function SiteHeader({
     <header className={`site-header${solid ? " solid" : ""}`}>
       <div className="container header-inner">
         <Link href="/" className="brand">
-          <img src={logoUrl || "/brand/symbol-white.png"} alt="Metaline" />
+          <Image src={logoUrl || "/brand/symbol-white.png"} alt="Metaline" width={36} height={36} priority />
           <span className="brand-name">Metaline</span>
         </Link>
         <nav className="nav">
           {navItems.map((n) => (
-            <Link key={n.id} href={n.href} target={n.open_in_new_tab ? "_blank" : undefined} rel={n.open_in_new_tab ? "noopener noreferrer" : undefined}>
+            <Link key={n.id} href={sanitizeHref(n.href)} target={n.open_in_new_tab ? "_blank" : undefined} rel={n.open_in_new_tab ? "noopener noreferrer" : undefined}>
               {n.label}
             </Link>
           ))}
@@ -59,12 +61,12 @@ export default function SiteHeader({
           {(facebookUrl || instagramUrl) && (
             <div className="header-social">
               {facebookUrl && (
-                <a href={facebookUrl} target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+                <a href={sanitizeHref(facebookUrl)} target="_blank" rel="noopener noreferrer" aria-label="Facebook">
                   <IconFacebook />
                 </a>
               )}
               {instagramUrl && (
-                <a href={instagramUrl} target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                <a href={sanitizeHref(instagramUrl)} target="_blank" rel="noopener noreferrer" aria-label="Instagram">
                   <IconInstagram />
                 </a>
               )}
@@ -85,13 +87,13 @@ export default function SiteHeader({
           ×
         </button>
         <div className="mobile-nav-brand">
-          <img src={logoUrl || "/brand/symbol-white.png"} alt="Metaline" />
+          <Image src={logoUrl || "/brand/symbol-white.png"} alt="Metaline" width={30} height={30} />
           <span>Metaline</span>
         </div>
         {navItems.map((n) => (
           <Link
             key={n.id}
-            href={n.href}
+            href={sanitizeHref(n.href)}
             target={n.open_in_new_tab ? "_blank" : undefined}
             rel={n.open_in_new_tab ? "noopener noreferrer" : undefined}
             onClick={() => setOpen(false)}
@@ -105,12 +107,12 @@ export default function SiteHeader({
         {(facebookUrl || instagramUrl) && (
           <div className="header-social mobile">
             {facebookUrl && (
-              <a href={facebookUrl} target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+              <a href={sanitizeHref(facebookUrl)} target="_blank" rel="noopener noreferrer" aria-label="Facebook">
                 <IconFacebook />
               </a>
             )}
             {instagramUrl && (
-              <a href={instagramUrl} target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+              <a href={sanitizeHref(instagramUrl)} target="_blank" rel="noopener noreferrer" aria-label="Instagram">
                 <IconInstagram />
               </a>
             )}

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import HeroScene, { LogoEmblem, GateDivider } from "@/components/HeroScene";
 import { QuoteButton } from "@/components/QuoteModal";
 import { getHomeContent, getServices, getSiteSettings, getTestimonials } from "@/lib/site-data";
@@ -101,10 +102,8 @@ export default async function Home() {
             <div className="trust-label">עבודה מותאמת אישית</div>
           </div>
           <div className="trust-item">
-            <div className="trust-num">
-              {settings.warranty_years ?? <>[<span className="u">להשלמה</span>]</>}
-            </div>
-            <div className="trust-label">שנות אחריות</div>
+            <div className="trust-num">ליווי אישי</div>
+            <div className="trust-label">לאורך כל הפרויקט</div>
           </div>
         </div>
       </section>
@@ -183,9 +182,15 @@ export default async function Home() {
               <div className="about-ring a2" aria-hidden="true" />
               <div className="about-core">
                 {content.about_image_url ? (
-                  <img src={content.about_image_url} alt="Metaline" style={{ objectFit: "cover", width: "100%", height: "100%", borderRadius: "50%" }} />
+                  <Image
+                    src={content.about_image_url}
+                    alt="Metaline"
+                    fill
+                    sizes="210px"
+                    style={{ objectFit: "cover", borderRadius: "50%" }}
+                  />
                 ) : (
-                  <img src="/brand/symbol-white.png" alt="Metaline" />
+                  <Image src="/brand/symbol-white.png" alt="Metaline" width={108} height={108} />
                 )}
               </div>
               <div className="about-badge">

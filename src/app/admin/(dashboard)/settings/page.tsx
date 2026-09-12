@@ -12,7 +12,7 @@ export default async function AdminSettingsPage() {
   const { data: settings } = await supabase
     .from("site_settings")
     .select(
-      "id, phone, whatsapp, email, address, hours, facebook_url, instagram_url, years_in_business, projects_count, warranty_years, logo_url, updated_at"
+      "id, phone, whatsapp, email, address, hours, facebook_url, instagram_url, years_in_business, projects_count, warranty_years, logo_url, accessibility_coordinator_name, updated_at"
     )
     .eq("id", 1)
     .single();

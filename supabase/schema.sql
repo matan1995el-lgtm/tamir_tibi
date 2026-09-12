@@ -257,14 +257,18 @@ grant execute on function private.current_admin_role() to authenticated;
 -- technically remains valid until it expires. The admin dashboard layout
 -- (src/app/admin/(dashboard)/layout.tsx) additionally force-signs-out and
 -- redirects any session whose admin_users row is gone.
+-- auth.uid() is wrapped in (select ...) below per Supabase's
+-- auth_rls_initplan advisory, so Postgres evaluates it once per query
+-- instead of re-evaluating it for every row — same access logic, faster
+-- at scale. No behavior change.
 create policy "admin_users select own or owner" on admin_users
-  for select to authenticated using (id = auth.uid() or private.current_admin_role() = 'owner');
+  for select to authenticated using (id = (select auth.uid()) or private.current_admin_role() = 'owner');
 create policy "admin_users owner insert" on admin_users
   for insert to authenticated with check (private.current_admin_role() = 'owner');
 create policy "admin_users owner update" on admin_users
   for update to authenticated using (private.current_admin_role() = 'owner') with check (private.current_admin_role() = 'owner');
 create policy "admin_users owner delete" on admin_users
-  for delete to authenticated using (private.current_admin_role() = 'owner' and id <> auth.uid());
+  for delete to authenticated using (private.current_admin_role() = 'owner' and id <> (select auth.uid()));
 
 -- Every existing admin table's SELECT policy from earlier sections
 -- (`for all to authenticated using (true) with check (true)`) is replaced

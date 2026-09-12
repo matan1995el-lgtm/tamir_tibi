@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ContentBlock } from "@/lib/site-data";
+import { sanitizeHref } from "@/lib/link-safety";
 
 /**
  * Renders the block list authored in the admin panel's page/blog editor
@@ -27,8 +28,14 @@ export default function BlockRenderer({ blocks }: { blocks: ContentBlock[] }) {
               <img key={i} src={b.url} alt={b.alt || ""} className="block-image" />
             ) : null;
           case "button":
+            // sanitizeHref is defense in depth: the admin editor (BlockEditor
+            // + PagesManager/BlogManager's save-time check) already blocks an
+            // unsafe href from being saved, but this also covers any row
+            // written before that check existed or edited directly in the
+            // database — never a "javascript:"/"data:" URI reaching a real
+            // <a href> on the public site, whatever wrote it.
             return b.href ? (
-              <Link key={i} href={b.href} className="btn btn-gold block-button">
+              <Link key={i} href={sanitizeHref(b.href)} className="btn btn-gold block-button">
                 {b.text || "לפרטים נוספים"}
               </Link>
             ) : null;

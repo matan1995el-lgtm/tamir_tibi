@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import type { GalleryProject } from "@/lib/site-data";
 import { ArtElectricGate, ArtRailing, ArtPergola, ArtPartition } from "@/components/PlaceholderArt";
@@ -76,7 +77,13 @@ export default function GalleryClient({ projects }: { projects: GalleryProject[]
                 <div className="gal-wrap" key={item.id}>
                   <div className="gal-tile">
                     {item.image_url ? (
-                      <img className="photo" src={item.image_url} alt={item.title} loading="lazy" decoding="async" />
+                      <Image
+                        className="photo"
+                        src={item.image_url}
+                        alt={item.title}
+                        fill
+                        sizes="(max-width: 620px) 100vw, (max-width: 980px) 50vw, 25vw"
+                      />
                     ) : (
                       <>
                         <Art className="art-placeholder" />

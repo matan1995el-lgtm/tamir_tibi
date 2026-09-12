@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase-browser";
 import BlockEditor from "@/components/admin/BlockEditor";
+import { findUnsafeBlockHref } from "@/lib/link-safety";
 import { RESERVED_SLUGS, type ContentBlock, type CustomPage } from "@/lib/site-data";
 import { IconPlus, IconEdit, IconTrash, IconCheck, IconX, IconInboxEmpty } from "@/components/Icons";
 
@@ -77,6 +78,11 @@ export default function PagesManager({ initialPages }: { initialPages: CustomPag
     const slug = form.slug.trim().toLowerCase();
     if (RESERVED_SLUGS.includes(slug)) {
       pushToast("err", `הסלאג "${slug}" שמור לעמוד קיים באתר — יש לבחור סלאג אחר`);
+      return;
+    }
+    const unsafeHref = findUnsafeBlockHref(form.blocks);
+    if (unsafeHref) {
+      pushToast("err", `הקישור בכפתור "${unsafeHref}" אינו תקין — יש להשתמש בנתיב פנימי, כתובת http(s), או "mailto:"/"tel:"`);
       return;
     }
     setSaving(true);

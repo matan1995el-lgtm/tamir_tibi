@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 
 /**
  * Gate-open intro: two panels slide apart to reveal the site, once per
@@ -51,7 +52,7 @@ export default function Preloader() {
     <div id="preloader" className={open ? "open" : ""} aria-hidden="true">
       <div className="pl-panel l" />
       <div className="pl-panel r" />
-      <img className="pl-mark" src="/brand/symbol-white.png" alt="" />
+      <Image className="pl-mark" src="/brand/symbol-white.png" alt="" width={52} height={52} priority />
     </div>
   );
 }

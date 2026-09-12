@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { createClient } from "@/lib/supabase-browser";
+import { validateImageFile } from "@/lib/upload-guards";
 import { IconPhoto, IconUpload } from "@/components/Icons";
 import type { AboutContent, ContactContent, HomeContent } from "@/lib/site-data";
 
@@ -41,6 +42,12 @@ function ImageField({
   async function handleFileChosen(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    const validationError = validateImageFile(file);
+    if (validationError) {
+      toast("err", validationError);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
     setUploading(true);
     try {
       const supabase = createClient();

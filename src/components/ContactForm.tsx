@@ -18,6 +18,7 @@ export default function ContactForm({ contactFallback }: { contactFallback?: str
       email: String(data.get("email") ?? ""),
       service: String(data.get("service") ?? ""),
       message: String(data.get("message") ?? ""),
+      website: String(data.get("website") ?? ""),
     };
 
     try {
@@ -36,6 +37,13 @@ export default function ContactForm({ contactFallback }: { contactFallback?: str
 
   return (
     <form className="contact-form" onSubmit={onSubmit}>
+      {/* Honeypot — real visitors never see this field (visually hidden,
+          skipped by tab order) or fill it; a bot that blindly fills every
+          input in the form trips it. Checked server-side in /api/contact. */}
+      <div aria-hidden="true" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", opacity: 0, pointerEvents: "none" }}>
+        <label htmlFor="website">אל תמלאו שדה זה</label>
+        <input id="website" name="website" type="text" tabIndex={-1} autoComplete="off" />
+      </div>
       <div className="field">
         <label htmlFor="name">שם מלא *</label>
         <input id="name" name="name" type="text" required placeholder="השם שלכם" />

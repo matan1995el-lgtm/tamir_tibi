@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { GateDivider } from "@/components/HeroScene";
 import { getPublishedBlogPosts } from "@/lib/site-data";
 
@@ -36,8 +37,18 @@ export default async function BlogListPage() {
               {posts.map((post) => (
                 <Link key={post.id} href={`/blog/${post.slug}`} className="blog-card">
                   {post.cover_image_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={post.cover_image_url} alt="" className="blog-card-img" />
+                    // Explicit width/height only feed next/image's srcset
+                    // math — the actual box shape still comes from the
+                    // .blog-card-img CSS (aspect-ratio + object-fit: cover),
+                    // unchanged from before.
+                    <Image
+                      src={post.cover_image_url}
+                      alt=""
+                      width={640}
+                      height={400}
+                      className="blog-card-img"
+                      sizes="(max-width: 640px) 100vw, (max-width: 980px) 50vw, 33vw"
+                    />
                   ) : (
                     <div className="blog-card-img blog-card-img-empty" aria-hidden="true" />
                   )}

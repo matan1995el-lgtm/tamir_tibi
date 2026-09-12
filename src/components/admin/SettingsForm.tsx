@@ -2,6 +2,8 @@
 
 import { useRef, useState } from "react";
 import { createClient } from "@/lib/supabase-browser";
+import { isSafeHref } from "@/lib/link-safety";
+import { validateImageFile } from "@/lib/upload-guards";
 import { IconPhoto, IconUpload } from "@/components/Icons";
 
 type SiteSettings = {
@@ -17,6 +19,7 @@ type SiteSettings = {
   projects_count: number | null;
   warranty_years: number | null;
   logo_url: string | null;
+  accessibility_coordinator_name: string | null;
   updated_at: string | null;
 };
 
@@ -32,6 +35,7 @@ type FormState = {
   projects_count: string;
   warranty_years: string;
   logo_url: string;
+  accessibility_coordinator_name: string;
 };
 
 type Toast = { id: number; text: string; type: "ok" | "err" };
@@ -58,6 +62,7 @@ function toFormState(settings: SiteSettings | null): FormState {
         ? ""
         : String(settings.warranty_years),
     logo_url: settings?.logo_url ?? "",
+    accessibility_coordinator_name: settings?.accessibility_coordinator_name ?? "",
   };
 }
 
@@ -85,6 +90,12 @@ export default function SettingsForm({ initialSettings }: { initialSettings: Sit
   async function handleLogoChosen(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    const validationError = validateImageFile(file);
+    if (validationError) {
+      pushToast(validationError, "err");
+      if (logoInputRef.current) logoInputRef.current.value = "";
+      return;
+    }
     setUploadingLogo(true);
     try {
       const supabase = createClient();
@@ -110,6 +121,17 @@ export default function SettingsForm({ initialSettings }: { initialSettings: Sit
   }
 
   async function handleSave() {
+    const fb = form.facebook_url.trim();
+    const ig = form.instagram_url.trim();
+    // These render as real <a href> links in the header, footer, and the
+    // WhatsApp quick-contact popup on every page — block a "javascript:"/
+    // "data:" URI here rather than trusting the <input type="url"> field,
+    // which only checks the value LOOKS like a URL, not that its scheme
+    // is safe.
+    if ((fb && !isSafeHref(fb)) || (ig && !isSafeHref(ig))) {
+      pushToast("קישור הפייסבוק/אינסטגרם אינו תקין — יש להזין כתובת http(s) תקינה", "err");
+      return;
+    }
     setSaving(true);
     try {
       const supabase = createClient();
@@ -128,6 +150,7 @@ export default function SettingsForm({ initialSettings }: { initialSettings: Sit
           projects_count: toIntOrNull(form.projects_count),
           warranty_years: toIntOrNull(form.warranty_years),
           logo_url: form.logo_url.trim() || null,
+          accessibility_coordinator_name: form.accessibility_coordinator_name.trim() || null,
           updated_at: nowIso,
         })
         .eq("id", 1);
@@ -268,6 +291,21 @@ export default function SettingsForm({ initialSettings }: { initialSettings: Sit
             onChange={(e) => update("warranty_years", e.target.value)}
             placeholder="טרם הוזן"
           />
+        </div>
+
+        <div className="field">
+          <label htmlFor="accessibility_coordinator_name">שם רכז/ת נגישות</label>
+          <input
+            id="accessibility_coordinator_name"
+            type="text"
+            value={form.accessibility_coordinator_name}
+            onChange={(e) => update("accessibility_coordinator_name", e.target.value)}
+            placeholder="טרם הוזן"
+          />
+          <span style={{ fontSize: 12, color: "var(--muted)" }}>
+            מוצג בעמוד &quot;הצהרת נגישות&quot; — דרישת חוק. הטלפון והאימייל של רכז/ת הנגישות נלקחים אוטומטית
+            מפרטי הטלפון והאימייל שהוזנו למעלה.
+          </span>
         </div>
 
         <div className="field full">

@@ -12,11 +12,20 @@ import { supabase } from "@/lib/supabase";
 const FORMSPREE_ENDPOINT = "https://formspree.io/f/meaqloeb";
 
 export async function POST(req: Request) {
-  let body: { name?: string; phone?: string; email?: string; message?: string; service?: string };
+  let body: { name?: string; phone?: string; email?: string; message?: string; service?: string; website?: string };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ ok: false, error: "invalid_json" }, { status: 400 });
+  }
+
+  // Honeypot: a field named to look real ("website") that both public
+  // forms render visually hidden and never ask a person to fill in.
+  // Bots that blindly fill every field in a scraped form trip it; a real
+  // visitor never sees or fills it. Report success without writing
+  // anything — a bot that gets an error response just learns to retry.
+  if ((body.website ?? "").trim()) {
+    return NextResponse.json({ ok: true });
   }
 
   const name = (body.name ?? "").trim();

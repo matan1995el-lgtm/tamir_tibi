@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase-browser";
 import BlockEditor from "@/components/admin/BlockEditor";
+import { findUnsafeBlockHref } from "@/lib/link-safety";
 import type { BlogPost, ContentBlock } from "@/lib/site-data";
 import { IconPlus, IconEdit, IconTrash, IconCheck, IconX, IconInboxEmpty } from "@/components/Icons";
 
@@ -86,6 +87,11 @@ export default function BlogManager({ initialPosts }: { initialPosts: BlogPost[]
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const unsafeHref = findUnsafeBlockHref(form.blocks);
+    if (unsafeHref) {
+      pushToast("err", `הקישור בכפתור "${unsafeHref}" אינו תקין — יש להשתמש בנתיב פנימי, כתובת http(s), או "mailto:"/"tel:"`);
+      return;
+    }
     setSaving(true);
     const supabase = createClient();
     const existing = rows.find((r) => r.id === form.id);

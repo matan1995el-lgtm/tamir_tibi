@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { createClient } from "@/lib/supabase-browser";
+import { validateImageFile } from "@/lib/upload-guards";
 import { IconPlus, IconEdit, IconTrash, IconX, IconPhoto, IconUpload } from "@/components/Icons";
 
 const CATEGORIES = ["שערים חשמליים", "מעקות אלומיניום", "פרגולות", "מחיצות מתכת"] as const;
@@ -76,6 +77,12 @@ export default function GalleryManager({ initialItems }: { initialItems: Gallery
   async function handleFileChosen(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    const validationError = validateImageFile(file);
+    if (validationError) {
+      pushToast("err", validationError);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
     setUploading(true);
     try {
       const supabase = createClient();

@@ -19,6 +19,7 @@ export type SiteSettings = {
   projects_count: number | null;
   warranty_years: number | null;
   logo_url: string | null;
+  accessibility_coordinator_name: string | null;
 };
 
 const EMPTY_SETTINGS: SiteSettings = {
@@ -33,6 +34,7 @@ const EMPTY_SETTINGS: SiteSettings = {
   projects_count: null,
   warranty_years: null,
   logo_url: null,
+  accessibility_coordinator_name: null,
 };
 
 export async function getSiteSettings(): Promise<SiteSettings> {

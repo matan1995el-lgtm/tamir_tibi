@@ -42,7 +42,13 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
         />
         {children}
         <SiteFooter settings={settings} />
-        <WhatsAppFab whatsapp={settings.whatsapp} phone={settings.phone} email={settings.email} />
+        <WhatsAppFab
+          whatsapp={settings.whatsapp}
+          phone={settings.phone}
+          email={settings.email}
+          facebookUrl={settings.facebook_url}
+          instagramUrl={settings.instagram_url}
+        />
         <AccessibilityWidget />
         <MobileCtaBar phone={settings.phone} />
       </QuoteModalProvider>

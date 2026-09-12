@@ -93,7 +93,10 @@ export default async function AccessibilityPage() {
           </p>
           <ul>
             <li>
-              רכז/ת נגישות: <span className="placeholder">[להשלמה: שם רכז/ת הנגישות]</span>
+              רכז/ת נגישות:{" "}
+              {settings.accessibility_coordinator_name || (
+                <span className="placeholder">[להשלמה: שם רכז/ת הנגישות]</span>
+              )}
             </li>
             <li>
               טלפון:{" "}

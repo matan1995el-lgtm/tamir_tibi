@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { IconCheck } from "@/components/Icons";
 import { GateDivider } from "@/components/HeroScene";
 import { QuoteButton } from "@/components/QuoteModal";
@@ -51,9 +52,15 @@ export default async function AboutPage() {
               <div className="about-ring a2" aria-hidden="true" />
               <div className="about-core">
                 {content.story_image_url ? (
-                  <img src={content.story_image_url} alt="Metaline" style={{ objectFit: "cover", width: "100%", height: "100%", borderRadius: "50%" }} />
+                  <Image
+                    src={content.story_image_url}
+                    alt="Metaline"
+                    fill
+                    sizes="210px"
+                    style={{ objectFit: "cover", borderRadius: "50%" }}
+                  />
                 ) : (
-                  <img src="/brand/symbol-white.png" alt="Metaline" />
+                  <Image src="/brand/symbol-white.png" alt="Metaline" width={108} height={108} />
                 )}
               </div>
               <div className="about-badge">

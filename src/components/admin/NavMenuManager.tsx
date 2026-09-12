@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase-browser";
+import { isSafeHref } from "@/lib/link-safety";
 import { IconPlus, IconEdit, IconTrash, IconX, IconCheck, IconInboxEmpty } from "@/components/Icons";
 
 type NavItem = {
@@ -81,8 +82,6 @@ export default function NavMenuManager({ initialItems }: { initialItems: NavItem
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSaving(true);
-    const supabase = createClient();
 
     const payload = {
       label: form.label.trim(),
@@ -91,6 +90,18 @@ export default function NavMenuManager({ initialItems }: { initialItems: NavItem
       is_visible: form.is_visible,
       open_in_new_tab: form.open_in_new_tab,
     };
+
+    // This href renders as a real link on every page of the public site —
+    // block anything but an internal path, a full http(s) URL, or a
+    // mailto:/tel: link (e.g. a "javascript:" URI) before it ever reaches
+    // the database.
+    if (!isSafeHref(payload.href)) {
+      pushToast("err", 'הקישור אינו תקין — יש להשתמש בנתיב פנימי (כמו /gallery), כתובת http(s), או "mailto:"/"tel:"');
+      return;
+    }
+
+    setSaving(true);
+    const supabase = createClient();
 
     try {
       if (form.id) {

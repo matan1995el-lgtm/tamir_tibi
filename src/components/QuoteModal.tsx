@@ -88,6 +88,7 @@ export function QuoteModalProvider({
       email: String(data.get("email") ?? ""),
       service: String(data.get("service") ?? ""),
       message: String(data.get("message") ?? ""),
+      website: String(data.get("website") ?? ""),
     };
 
     try {
@@ -130,6 +131,12 @@ export function QuoteModalProvider({
               </div>
             ) : (
               <form className="contact-form" onSubmit={onSubmit} style={{ marginTop: 18 }}>
+                {/* Honeypot — see ContactForm.tsx for the full explanation;
+                    checked server-side in /api/contact. */}
+                <div aria-hidden="true" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", opacity: 0, pointerEvents: "none" }}>
+                  <label htmlFor="qm-website">אל תמלאו שדה זה</label>
+                  <input id="qm-website" name="website" type="text" tabIndex={-1} autoComplete="off" />
+                </div>
                 <div className="field">
                   <label htmlFor="qm-name">שם מלא *</label>
                   <input ref={firstFieldRef} id="qm-name" name="name" type="text" required placeholder="השם שלכם" />
