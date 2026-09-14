@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { GateDivider } from "@/components/HeroScene";
 import { QuoteButton } from "@/components/QuoteModal";
 import { getServices } from "@/lib/site-data";
@@ -41,16 +42,21 @@ export default async function ServicesPage() {
                 const Icon = getServiceIcon(s.icon);
                 return (
                   <div className="tilt-wrap" key={s.id}>
-                    <div className="svc-card">
+                    {/* This listing page's cards were plain <div>s with no
+                        link — clicking one did nothing, unlike the identical
+                        cards on the homepage, which correctly link through
+                        to the service's own page. Matching that pattern here
+                        fixes it: the whole card now navigates to
+                        /services/[slug], where visitors can still request a
+                        quote from that service's own CTA. */}
+                    <Link href={`/services/${s.slug}`} className="svc-card">
                       <div className="svc-icon">
                         <Icon />
                       </div>
                       <h3>{s.title}</h3>
                       <p>{s.description}</p>
-                      <QuoteButton className="svc-link" service={s.title}>
-                        בקשו הצעת מחיר ←
-                      </QuoteButton>
-                    </div>
+                      <span className="svc-link">לפרטים נוספים ←</span>
+                    </Link>
                   </div>
                 );
               })}

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "@fontsource/rubik/latin-500.css";
 import "@fontsource/rubik/latin-600.css";
 import "@fontsource/rubik/latin-700.css";
@@ -41,6 +41,21 @@ import { getSeoSettings } from "@/lib/site-data";
 // previews (WhatsApp/Facebook/Google) resolve OG images and canonical URLs
 // correctly. Falls back to a placeholder so the build never breaks without it.
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://example.com";
+
+// Without this the page has no viewport meta tag at all, so mobile
+// browsers fall back to laying the page out at a desktop-ish width and
+// then shrinking it to fit the screen — every fixed element (the mobile
+// nav overlay, the WhatsApp/accessibility buttons, the sticky CTA bar)
+// ends up positioned against that wrong, wider layout box instead of the
+// real screen, which is what caused the overlap/clipping/off-screen bugs
+// reported on mobile. `initialScale: 1` with no `maximumScale` keeps
+// pinch-zoom available — locking it out would fight the accessibility
+// widget's own font-scaling feature and hurt low-vision visitors.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#0e1318",
+};
 
 const DEFAULT_TITLE = "Metaline — פתרונות אלומיניום ומתכת ברמה אחרת";
 const DEFAULT_DESCRIPTION =

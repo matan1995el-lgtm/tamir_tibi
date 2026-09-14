@@ -14,7 +14,21 @@
 }
 
 * { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; }
+/* overflow-x: hidden here is a deliberate safety net, not just tidiness.
+   The hero's 3D orbit graphic (.orbit-parallax/.orbit-stage) and a few
+   other decorative elements are absolutely positioned and, even with
+   `.hero { overflow-x: hidden }` clipping them visually, their laid-out
+   (pre-transform) geometry still reaches past the edge of the page. On a
+   real mobile browser that extra width makes the browser's own "avoid
+   clipping content" viewport heuristic quietly widen the whole page's
+   layout viewport (e.g. from 390px to 429px) to fit it — which is what
+   was making the ENTIRE site render zoomed out on phones, throwing off
+   every fixed-position element (mobile nav, WhatsApp/accessibility
+   buttons, the sticky CTA bar) at once instead of just clipping the one
+   decorative graphic. Locking horizontal overflow out at the document
+   root, once, here, is far more robust than chasing every current and
+   future decorative element that might poke past its container. */
+html, body { margin: 0; padding: 0; overflow-x: hidden; }
 
 /* Every icon component in the app renders a bare <svg viewBox="..."> with
    no width/height of its own — sizing is meant to come from a className
@@ -47,6 +61,19 @@ h1, h2, h3, .brandfont {
 
 a { color: var(--gold); text-decoration: none; }
 a:hover { color: var(--gold-2); }
+
+/* Mobile browsers paint their own translucent "tap highlight" flash over
+   any tapped link/button — WebKit's default is a bluish-gray tint. With
+   no override, tapping the solid-green WhatsApp button (or the blue
+   accessibility button) briefly shows that tint blended on top of the
+   real background color, which reads as a wrong/muddy color in a
+   screenshot taken right after a tap even though the button's own CSS
+   color never changed. Removing it site-wide (every link, button and
+   .btn/.fab/.a11y-fab) keeps the buttons' real brand colors — WhatsApp
+   green, accessibility blue — clean on every tap, not just on these two. */
+a, button, .btn, .fab, .a11y-fab {
+  -webkit-tap-highlight-color: transparent;
+}
 
 /* ---------- KEYBOARD FOCUS ---------- */
 a:focus-visible, button:focus-visible, .btn:focus-visible, input:focus-visible,
@@ -146,7 +173,15 @@ textarea:focus-visible, select:focus-visible, [tabindex]:focus-visible {
 }
 
 /* ---------- HEADER ---------- */
-.site-header { position: absolute; top: 0; right: 0; left: 0; z-index: 30; padding: 20px 0; }
+/* z-index: 60, not 30 — `position: absolute` (or `.solid`'s `sticky`)
+   makes `.site-header` its own stacking context, so its `.mobile-nav`
+   child's own `z-index: 50` only wins against elements *inside* that
+   context. Against outside siblings like the WhatsApp/accessibility FABs
+   (z-index 40) and the sticky mobile CTA bar (z-index 45), what counts is
+   the HEADER's own z-index — at 30 those fixed buttons painted on top of
+   the header's entire subtree, including the open mobile nav overlay,
+   even though the overlay itself is fully opaque. 60 clears all of them. */
+.site-header { position: absolute; top: 0; right: 0; left: 0; z-index: 60; padding: 20px 0; }
 .site-header.solid { position: sticky; background: rgba(14, 19, 24, .82); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line-2); }
 .header-inner { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
 .brand { display: flex; align-items: center; gap: 12px; }
@@ -476,7 +511,13 @@ canvas#dust { position: absolute; inset: 0; z-index: 1; opacity: .55; }
 .field label { font-size: 13.5px; font-weight: 600; color: var(--white); }
 .field input, .field textarea, .field select {
   background: var(--ink-2); border: 1px solid var(--line-2); border-radius: 3px; color: var(--white);
-  padding: 13px 16px; font-size: 14.5px; font-family: 'Heebo', sans-serif; transition: border-color .25s ease;
+  /* 16px, not 14.5px — this is the contact page AND the quote-request
+     modal's own form fields (the site's main lead-capture flow). Below
+     16px, iOS Safari auto-zooms the whole page in the instant a visitor
+     taps into any field, which is jarring on exactly the form that
+     matters most for turning a mobile visitor into a lead. 16px is the
+     standard safe minimum that keeps iOS from zooming at all. */
+  padding: 13px 16px; font-size: 16px; font-family: 'Heebo', sans-serif; transition: border-color .25s ease;
 }
 .field input:focus, .field textarea:focus, .field select:focus { outline: none; border-color: var(--gold); }
 .field input:user-invalid, .field textarea:user-invalid, .field select:user-invalid { border-color: #e0685f; }
@@ -592,6 +633,23 @@ canvas#dust { position: absolute; inset: 0; z-index: 1; opacity: .55; }
 .fab:hover { transform: translateY(-3px); }
 .fab svg { width: 28px; height: 28px; }
 
+/* ---------- ACCESSIBILITY WIDGET ----------
+   Mirrors the WhatsApp FAB on the opposite side, same size — and uses the
+   internationally recognized accessibility symbol (the ISA wheelchair
+   icon) on the standard accessibility blue, rather than a custom mark,
+   since this is the icon people already know to look for.
+   This block must stay ABOVE the "MOBILE STICKY LEAD BAR" section below:
+   its bottom-offset media-query override lives there, and CSS resolves
+   two rules of equal specificity by source order — with this base rule
+   declared after the override (as it briefly was), the plain `bottom:
+   26px` here always won, even on mobile, so the button sat low enough to
+   be hidden behind the sticky CTA bar instead of clearing it. */
+.a11y-fab { position: fixed; right: 26px; bottom: 26px; z-index: 40; width: 58px; height: 58px; border-radius: 50%; background: #0057D9; display: flex; align-items: center; justify-content: center; box-shadow: 0 14px 34px -10px rgba(0, 0, 0, .6), 0 0 0 6px rgba(0, 87, 217, .14); border: none; padding: 0; cursor: pointer; transition: transform .25s ease; }
+.a11y-fab:hover { transform: translateY(-3px); }
+.a11y-fab svg { width: 30px; height: 30px; color: #fff; }
+.a11y-panel-overlay { position: fixed; inset: 0; z-index: 90; background: rgba(9, 12, 15, .55); backdrop-filter: blur(2px); animation: qmodalIn .18s ease; }
+.a11y-panel { position: fixed; right: 20px; bottom: 96px; z-index: 91; width: 320px; max-width: calc(100vw - 40px); max-height: 74vh; overflow-y: auto; background: linear-gradient(160deg, var(--ink-2), var(--ink-1)); border: 1px solid var(--line-2); border-radius: 10px; padding: 22px; box-shadow: 0 30px 70px -20px rgba(0, 0, 0, .7); }
+
 /* ---------- MOBILE STICKY LEAD BAR ---------- */
 .mcta-bar {
   display: none;
@@ -608,18 +666,14 @@ canvas#dust { position: absolute; inset: 0; z-index: 1; opacity: .55; }
   .mcta-bar { display: block; }
   .fab { bottom: calc(26px + var(--mcta-h, 76px)); }
   .a11y-fab { bottom: calc(26px + var(--mcta-h, 76px)); }
+  /* The sticky lead bar covers the page's own bottom edge, so on mobile
+     the footer's last row (social icons + copyright) was permanently
+     hidden behind it with no way to scroll past — there was no page
+     content below it to reveal it. Reserving that same height as
+     padding on the footer's last block gives the page room to scroll
+     that row above the bar instead of under it. */
+  .footer-bottom { padding-bottom: calc(26px + var(--mcta-h, 76px)); }
 }
-
-/* ---------- ACCESSIBILITY WIDGET ----------
-   Mirrors the WhatsApp FAB on the opposite side, same size — and uses the
-   internationally recognized accessibility symbol (the ISA wheelchair
-   icon) on the standard accessibility blue, rather than a custom mark,
-   since this is the icon people already know to look for. */
-.a11y-fab { position: fixed; right: 26px; bottom: 26px; z-index: 40; width: 58px; height: 58px; border-radius: 50%; background: #0057D9; display: flex; align-items: center; justify-content: center; box-shadow: 0 14px 34px -10px rgba(0, 0, 0, .6), 0 0 0 6px rgba(0, 87, 217, .14); border: none; padding: 0; cursor: pointer; transition: transform .25s ease; }
-.a11y-fab:hover { transform: translateY(-3px); }
-.a11y-fab svg { width: 30px; height: 30px; color: #fff; }
-.a11y-panel-overlay { position: fixed; inset: 0; z-index: 90; background: rgba(9, 12, 15, .55); backdrop-filter: blur(2px); animation: qmodalIn .18s ease; }
-.a11y-panel { position: fixed; right: 20px; bottom: 96px; z-index: 91; width: 320px; max-width: calc(100vw - 40px); max-height: 74vh; overflow-y: auto; background: linear-gradient(160deg, var(--ink-2), var(--ink-1)); border: 1px solid var(--line-2); border-radius: 10px; padding: 22px; box-shadow: 0 30px 70px -20px rgba(0, 0, 0, .7); }
 
 /* ---------- QUICK-CONTACT POPUP (WhatsApp FAB) ---------- */
 .qa-panel-overlay { position: fixed; inset: 0; z-index: 90; background: rgba(9, 12, 15, .55); backdrop-filter: blur(2px); animation: qmodalIn .18s ease; }
