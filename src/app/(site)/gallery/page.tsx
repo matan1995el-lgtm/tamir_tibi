@@ -12,10 +12,17 @@ export const metadata: Metadata = {
   // a literal "| Metaline" here would double it up.
   title: "גלריית פרויקטים",
   description: "פרויקטים נבחרים של שערים חשמליים, מעקות אלומיניום, פרגולות ומחיצות מתכת מבית Metaline.",
+  alternates: { canonical: "/gallery" },
 };
 
 export default async function GalleryPage() {
   const projects = await getGalleryProjects();
+  // Stage 2.8 of the remediation plan: while any item still has no real
+  // photo (shows a brand illustration instead), the page shouldn't claim
+  // every tile is documented work — once every item has a real photo
+  // uploaded in the admin panel, this automatically reverts to the
+  // original "פרויקטים שביצענו" wording with no code change needed.
+  const anyPlaceholder = projects.some((p) => !p.image_url);
 
   return (
     <>
@@ -23,7 +30,11 @@ export default async function GalleryPage() {
         <div className="container">
           <span className="eyebrow">עבודות נבחרות</span>
           <h1>גלריית הפרויקטים שלנו</h1>
-          <p>סקירה של הפרויקטים שביצענו לפי סוג — סננו לפי התחום שמעניין אתכם.</p>
+          <p>
+            {anyPlaceholder
+              ? "אפשרויות עיצוב והדמיות להמחשה, לצד פרויקטים אמיתיים שביצענו — לפי סוג. סננו לפי התחום שמעניין אתכם."
+              : "סקירה של הפרויקטים שביצענו לפי סוג — סננו לפי התחום שמעניין אתכם."}
+          </p>
         </div>
       </section>
 

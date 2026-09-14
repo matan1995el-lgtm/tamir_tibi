@@ -7,12 +7,17 @@ import ScrollFX from "@/components/ScrollFX";
 import Preloader from "@/components/Preloader";
 import AccessibilityWidget from "@/components/AccessibilityWidget";
 import { QuoteModalProvider } from "@/components/QuoteModal";
-import { FONT_STACKS, formatContactFallback, getNavMenuItems, getSiteSettings, getSiteTheme } from "@/lib/site-data";
+import { FONT_STACKS, formatContactFallback, getNavMenuItems, getServices, getSiteSettings, getSiteTheme } from "@/lib/site-data";
 
 export const revalidate = 60;
 
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
-  const [settings, navItems, theme] = await Promise.all([getSiteSettings(), getNavMenuItems(), getSiteTheme()]);
+  const [settings, navItems, theme, services] = await Promise.all([
+    getSiteSettings(),
+    getNavMenuItems(),
+    getSiteTheme(),
+    getServices(),
+  ]);
   const fonts = FONT_STACKS[theme.font_pair];
 
   // Everything the admin's "עיצוב" screen controls (accent color, font
@@ -31,6 +36,9 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
   return (
     <div className="site-themed" style={themeVars}>
       <QuoteModalProvider contactFallback={formatContactFallback(settings)}>
+        <a href="#main-content" className="skip-link">
+          דילוג לתוכן הראשי
+        </a>
         <Preloader />
         <ScrollFX />
         <AmbientGlow />
@@ -40,8 +48,8 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
           facebookUrl={settings.facebook_url}
           instagramUrl={settings.instagram_url}
         />
-        {children}
-        <SiteFooter settings={settings} />
+        <main id="main-content">{children}</main>
+        <SiteFooter settings={settings} services={services} />
         <WhatsAppFab
           whatsapp={settings.whatsapp}
           phone={settings.phone}

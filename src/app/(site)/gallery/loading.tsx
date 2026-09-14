@@ -5,7 +5,7 @@ export default function GalleryLoading() {
         <div className="container">
           <span className="eyebrow">עבודות נבחרות</span>
           <h1>גלריית הפרויקטים שלנו</h1>
-          <p>סקירה של הפרויקטים שביצענו לפי סוג — סננו לפי התחום שמעניין אתכם.</p>
+          <p>עיון בפרויקטים ובאפשרויות העיצוב שלנו לפי סוג — סננו לפי התחום שמעניין אתכם.</p>
         </div>
       </section>
 

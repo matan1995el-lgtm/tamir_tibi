@@ -11,6 +11,7 @@ export const metadata: Metadata = {
   // a literal "| Metaline" here would double it up.
   title: "בלוג",
   description: "מאמרים, טיפים והשראה בנושאי שערים חשמליים, מעקות אלומיניום, פרגולות ומחיצות מתכת.",
+  alternates: { canonical: "/blog" },
 };
 
 export default async function BlogListPage() {

@@ -11,7 +11,7 @@ export default async function AdminLeadsPage() {
 
   const { data: leads } = await supabase
     .from("leads")
-    .select("id, name, phone, email, service, message, status, created_at")
+    .select("id, name, phone, email, service, area, message, status, created_at")
     .order("created_at", { ascending: false });
 
   return (

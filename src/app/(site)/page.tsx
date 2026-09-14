@@ -163,7 +163,7 @@ export default async function Home() {
                       <div className="process-icon">
                         <Icon />
                       </div>
-                      <h4>{c.title}</h4>
+                      <h3>{c.title}</h3>
                       <p>{c.desc}</p>
                     </div>
                   </div>
@@ -230,14 +230,20 @@ export default async function Home() {
       <section className="section tight gallery-t">
         <div className="container">
           <div className="sec-head center reveal">
-            <span className="eyebrow">עבודות נבחרות</span>
-            <h2>מהשטח</h2>
+            {/* This section always shows the 4 fixed category illustrations
+                (GALLERY_PREVIEW above), never real project photos — those
+                only appear on /gallery itself. "מהשטח" ("from the field")
+                would misleadingly imply these are documentation of actual
+                completed work (stage 2.8 of the remediation plan). */}
+            <span className="eyebrow">לפי תחום</span>
+            <h2>אפשרויות עיצוב והדמיות להמחשה</h2>
           </div>
           <div className="gal-grid reveal-stagger">
             {GALLERY_PREVIEW.map((g) => (
               <Link href={`/gallery?category=${encodeURIComponent(g.label)}`} className="gal-wrap" key={g.label}>
                 <div className="gal-tile">
                   <g.art className="art-placeholder" />
+                  <span className="art-badge">הדמיה</span>
                   <div className="scrim" />
                   <span className="lbl">{g.label}</span>
                 </div>

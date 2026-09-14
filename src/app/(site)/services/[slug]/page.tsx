@@ -5,6 +5,8 @@ import { GateDivider } from "@/components/HeroScene";
 import { QuoteButton } from "@/components/QuoteModal";
 import { getServiceBySlug, getServices, getSeoSettings } from "@/lib/site-data";
 import { getServiceIcon } from "@/lib/service-icons";
+import { isServiceSlug } from "@/lib/service-catalog";
+import { safeJsonLd } from "@/lib/json-ld";
 import { IconCheck } from "@/components/Icons";
 
 export const revalidate = 60;
@@ -188,6 +190,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: pageTitle,
     description,
+    alternates: { canonical: `/services/${slug}` },
     // Always set our own openGraph title/description (rather than leaving
     // the key out entirely, or setting it to `undefined`) so this page's
     // specific title/description show up in link previews instead of the
@@ -201,24 +204,51 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     openGraph: {
       title: fullTitle,
       description,
+      url: `/services/${slug}`,
       ...(seo.default_og_image_url ? { images: [seo.default_og_image_url] } : {}),
     },
   };
 }
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://example.com";
 
 export default async function ServiceDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const service = await getServiceBySlug(slug);
   if (!service) notFound();
 
+  // Structured data (stage 6.2 of the remediation plan) — built only from
+  // this service's own real fields, plus a breadcrumb trail matching the
+  // page's actual nav path. No ratings/reviews fabricated.
+  const serviceJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    name: service.title,
+    ...(service.description ? { description: service.description } : {}),
+    url: `${SITE_URL}/services/${slug}`,
+    provider: { "@type": "LocalBusiness", name: "Metaline" },
+  };
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "בית", item: SITE_URL },
+      { "@type": "ListItem", position: 2, name: "שירותים", item: `${SITE_URL}/services` },
+      { "@type": "ListItem", position: 3, name: service.title, item: `${SITE_URL}/services/${slug}` },
+    ],
+  };
+
   const Icon = getServiceIcon(service.icon);
   const detail = SERVICE_CONTENT[slug];
   const comparison = detail?.compare;
   const advantages = detail?.advantages ?? DEFAULT_ADVANTAGES;
   const galleryCategory = GALLERY_CATEGORY[slug];
+  const quoteServiceSlug = isServiceSlug(slug) ? slug : undefined;
 
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(serviceJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbJsonLd) }} />
       <section className="page-hero">
         <div className="container">
           <div className="svc-icon" style={{ marginBottom: 20 }}>
@@ -233,7 +263,7 @@ export default async function ServiceDetailPage({ params }: { params: Promise<{ 
           <h1>{service.title}</h1>
           <p>{service.description}</p>
           <div className="hero-actions" style={{ marginTop: 28 }}>
-            <QuoteButton className="btn btn-gold" service={service.title}>
+            <QuoteButton className="btn btn-gold" service={quoteServiceSlug}>
               בקשו הצעת מחיר
             </QuoteButton>
             {galleryCategory && (
@@ -278,7 +308,7 @@ export default async function ServiceDetailPage({ params }: { params: Promise<{ 
                 <div className="cmp-wrap" key={c.n}>
                   <div className="cmp-card">
                     <div className="cmp-num">{c.n}</div>
-                    <h4>{c.title}</h4>
+                    <h3>{c.title}</h3>
                     <p>{c.desc}</p>
                   </div>
                 </div>
@@ -296,7 +326,7 @@ export default async function ServiceDetailPage({ params }: { params: Promise<{ 
             <p>השאירו פרטים ונחזור אליכם עם הצעת מחיר מותאמת אישית, ללא התחייבות.</p>
           </div>
           <div className="cta-actions">
-            <QuoteButton className="btn btn-gold" service={service.title}>
+            <QuoteButton className="btn btn-gold" service={quoteServiceSlug}>
               קבלו הצעת מחיר
             </QuoteButton>
           </div>

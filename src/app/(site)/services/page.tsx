@@ -12,6 +12,7 @@ export const metadata: Metadata = {
   // a literal "| Metaline" here would double it up.
   title: "שירותים",
   description: "שערים חשמליים, מעקות אלומיניום, פרגולות ומחיצות מתכת, עיצוב, התקנה ותחזוקה — כל השירותים של Metaline.",
+  alternates: { canonical: "/services" },
 };
 
 export default async function ServicesPage() {

@@ -320,7 +320,19 @@ export default function GalleryManager({ initialItems }: { initialItems: Gallery
 
                 <div className="field full">
                   <label>תמונה</label>
-                  <div className="aupload" onClick={() => fileInputRef.current?.click()}>
+                  <div
+                    className="aupload"
+                    role="button"
+                    tabIndex={0}
+                    aria-label="לחצו להעלאת תמונה"
+                    onClick={() => fileInputRef.current?.click()}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        fileInputRef.current?.click();
+                      }
+                    }}
+                  >
                     {form.image_url ? (
                       <img src={form.image_url} alt="תצוגה מקדימה" />
                     ) : (

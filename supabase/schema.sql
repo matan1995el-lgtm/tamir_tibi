@@ -75,8 +75,17 @@ create table if not exists leads (
   service text,
   message text,
   status text not null default 'new' check (status in ('new', 'contacted', 'won', 'lost')),
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  -- Client-generated per-submit-attempt key. Lets /api/contact treat a
+  -- retried request (lost response, network blip) as already-saved
+  -- instead of inserting a duplicate lead — see migration
+  -- add_leads_idempotency_key.
+  idempotency_key text,
+  -- Service area / town the lead needs work done in — see migration
+  -- add_leads_area.
+  area text
 );
+create unique index if not exists leads_idempotency_key_uidx on leads (idempotency_key) where idempotency_key is not null;
 
 alter table site_settings enable row level security;
 alter table services enable row level security;
@@ -168,6 +177,20 @@ alter table site_settings add column if not exists logo_url text;
 -- public "gallery" storage bucket GalleryManager already uploads to,
 -- under a content/ and branding/ path prefix respectively — no new
 -- bucket or storage policy needed.
+--
+-- The "gallery" bucket itself + its two storage.objects policies (public
+-- read, authenticated-admin write) were created directly in the Supabase
+-- dashboard/MCP and never had their creating SQL committed here — added
+-- below, exactly matching what's live, so this schema can actually be
+-- reproduced from scratch as the comments throughout this file claim.
+insert into storage.buckets (id, name, public)
+values ('gallery', 'gallery', true)
+on conflict (id) do nothing;
+
+create policy "public read gallery bucket" on storage.objects
+  for select to anon, authenticated using (bucket_id = 'gallery');
+create policy "authenticated write gallery bucket" on storage.objects
+  for all to authenticated using (bucket_id = 'gallery') with check (bucket_id = 'gallery');
 
 -- ---------------------------------------------------------------------
 -- Added later: site theme (admin "עיצוב" screen) — accent color + font
@@ -270,6 +293,35 @@ create policy "admin_users owner update" on admin_users
 create policy "admin_users owner delete" on admin_users
   for delete to authenticated using (private.current_admin_role() = 'owner' and id <> (select auth.uid()));
 
+-- Defense in depth for the "last owner" protection already enforced in the
+-- Users admin UI (UsersManager.tsx blocks it client-side) — this trigger
+-- makes it impossible at the database level too, so it holds even if two
+-- owners race each other or the UI check is ever bypassed.
+create or replace function private.protect_last_owner()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if (tg_op = 'DELETE' and old.role = 'owner') or
+     (tg_op = 'UPDATE' and old.role = 'owner' and new.role <> 'owner') then
+    if (select count(*) from admin_users where role = 'owner' and id <> old.id) = 0 then
+      raise exception 'cannot remove the last remaining owner';
+    end if;
+  end if;
+  if tg_op = 'DELETE' then
+    return old;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists protect_last_owner_trigger on admin_users;
+create trigger protect_last_owner_trigger
+  before update or delete on admin_users
+  for each row execute function private.protect_last_owner();
+
 -- Every existing admin table's SELECT policy from earlier sections
 -- (`for all to authenticated using (true) with check (true)`) is replaced
 -- here with a split, role-aware set: SELECT requires a real admin row,
@@ -305,7 +357,12 @@ create policy "admin update pricing" on pricing_items for update to authenticate
 create policy "admin delete pricing" on pricing_items for delete to authenticated using (private.current_admin_role() = any (array['owner','marketing']));
 
 drop policy if exists "admin all leads" on leads;
-create policy "admin select leads" on leads for select to authenticated using (private.current_admin_role() is not null);
+-- Unlike every other admin table, leads SELECT is restricted to owner+marketing
+-- (not "any admin role") — leads hold customer PII (name/phone/email/message)
+-- and only owner/marketing have a "leads" nav section per ROLE_SECTIONS in
+-- src/lib/site-data.ts, so a designer/seo admin must not be able to read
+-- them even by querying the table directly.
+create policy "admin select leads" on leads for select to authenticated using (private.current_admin_role() = any (array['owner','marketing']));
 create policy "admin update leads" on leads for update to authenticated using (private.current_admin_role() = any (array['owner','marketing'])) with check (private.current_admin_role() = any (array['owner','marketing']));
 create policy "admin delete leads" on leads for delete to authenticated using (private.current_admin_role() = any (array['owner','marketing']));
 -- (the anon insert-only policy on leads is unchanged — see above)

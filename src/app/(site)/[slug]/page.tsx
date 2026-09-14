@@ -32,6 +32,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: page.seo_title ? { absolute: page.seo_title } : page.title,
     description,
+    alternates: { canonical: `/${slug}` },
     // Always set openGraph (never leave it `undefined`) — a child segment
     // that mentions the `openGraph` key at all replaces the root layout's
     // resolved OG data entirely, so the previous conditional pattern wiped
@@ -40,6 +41,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     openGraph: {
       title: fullTitle,
       description,
+      url: `/${slug}`,
       ...(ogImage ? { images: [ogImage] } : {}),
     },
   };

@@ -10,6 +10,7 @@ export const metadata: Metadata = {
   // a literal "| Metaline" here would double it up.
   title: "מדיניות פרטיות",
   description: "מדיניות הפרטיות של אתר Metaline — כיצד אנו אוספים, משתמשים ושומרים על המידע שלכם.",
+  alternates: { canonical: "/privacy" },
 };
 
 export default async function PrivacyPage() {

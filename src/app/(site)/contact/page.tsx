@@ -18,6 +18,7 @@ export const metadata: Metadata = {
   // a literal "| Metaline" here would double it up.
   title: "צור קשר",
   description: "השאירו פרטים ונחזור אליכם עם הצעת מחיר מותאמת אישית לשער חשמלי, מעקה אלומיניום, פרגולה או מחיצת מתכת.",
+  alternates: { canonical: "/contact" },
 };
 
 export default async function ContactPage() {
@@ -43,7 +44,7 @@ export default async function ContactPage() {
                 <IconPhone />
               </div>
               <div>
-                <h4>טלפון</h4>
+                <h2>טלפון</h2>
                 {settings.phone ? (
                   <p><a href={`tel:${settings.phone}`}>{settings.phone}</a></p>
                 ) : (
@@ -56,7 +57,7 @@ export default async function ContactPage() {
                 <IconMail />
               </div>
               <div>
-                <h4>אימייל</h4>
+                <h2>אימייל</h2>
                 {settings.email ? (
                   <p><a href={`mailto:${settings.email}`}>{settings.email}</a></p>
                 ) : (
@@ -69,7 +70,7 @@ export default async function ContactPage() {
                 <IconPin />
               </div>
               <div>
-                <h4>כתובת</h4>
+                <h2>כתובת</h2>
                 <p className={settings.address ? undefined : "placeholder"}>
                   {settings.address ?? "[להשלמה: כתובת המשרד/המפעל]"}
                 </p>
@@ -80,7 +81,7 @@ export default async function ContactPage() {
                 <IconClock />
               </div>
               <div>
-                <h4>שעות פעילות</h4>
+                <h2>שעות פעילות</h2>
                 <p className={settings.hours ? undefined : "placeholder"} style={{ whiteSpace: "pre-line" }}>
                   {settings.hours ?? "[להשלמה: שעות פעילות]"}
                 </p>
@@ -88,7 +89,7 @@ export default async function ContactPage() {
             </div>
 
             <div className="contact-quick">
-              <h4>או פנו אלינו ישירות</h4>
+              <h2>או פנו אלינו ישירות</h2>
               <div className="contact-quick-row">
                 {settings.whatsapp ? (
                   <a

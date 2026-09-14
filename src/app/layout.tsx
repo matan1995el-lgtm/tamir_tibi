@@ -34,7 +34,8 @@ import "@fontsource/assistant/hebrew-800.css";
 import "@fontsource/secular-one/latin-400.css";
 import "@fontsource/secular-one/hebrew-400.css";
 import "./globals.css";
-import { getSeoSettings } from "@/lib/site-data";
+import { getSeoSettings, getSiteSettings } from "@/lib/site-data";
+import { safeJsonLd } from "@/lib/json-ld";
 
 // NEXT_PUBLIC_SITE_URL should be set to the site's real production domain
 // once one is assigned (see .env.example) — it's what makes shared-link
@@ -108,9 +109,42 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+// Structured data (schema.org LocalBusiness) for Google's rich-result
+// eligibility. Built only from fields the admin panel actually has real
+// values for — never fabricated placeholders — so a business detail that
+// hasn't been filled in yet (see SiteSettings) is simply omitted from the
+// JSON-LD rather than emitted as an empty/placeholder string, which would
+// otherwise risk a Search Console "missing field" or "invalid value"
+// warning instead of no warning at all.
+async function buildLocalBusinessJsonLd() {
+  const settings = await getSiteSettings();
+  const sameAs = [settings.facebook_url, settings.instagram_url].filter(
+    (v): v is string => Boolean(v)
+  );
+  const jsonLd: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    name: "Metaline",
+    url: SITE_URL,
+  };
+  if (settings.logo_url) jsonLd.image = settings.logo_url;
+  if (settings.phone) jsonLd.telephone = settings.phone;
+  if (settings.email) jsonLd.email = settings.email;
+  if (settings.address) jsonLd.address = { "@type": "PostalAddress", streetAddress: settings.address };
+  if (sameAs.length) jsonLd.sameAs = sameAs;
+  return jsonLd;
+}
+
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const jsonLd = await buildLocalBusinessJsonLd();
   return (
     <html lang="he" dir="rtl">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
+        />
+      </head>
       <body>{children}</body>
     </html>
   );

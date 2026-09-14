@@ -41,6 +41,15 @@ export default function UsersManager({ initialUsers, currentUserId }: { initialU
   }
 
   async function changeRole(row: AdminUserRow, role: AdminRole) {
+    // Without this, two owners could demote each other (or the last owner
+    // demote themselves via a stale tab) down to zero — since only "owner"
+    // can reach Users/Settings at all (see requireAdminAccess ownerOnly),
+    // that would permanently lock everyone out of both screens with no way
+    // back in short of a direct DB edit.
+    if (row.role === "owner" && role !== "owner" && rows.filter((r) => r.role === "owner").length <= 1) {
+      pushToast("err", "אי אפשר להסיר את תפקיד הבעלים היחיד — זה ינעל את כולם מחוץ לניהול המשתמשים וההגדרות");
+      return;
+    }
     const supabase = createClient();
     const { error } = await supabase.from("admin_users").update({ role }).eq("id", row.id);
     if (error) {
@@ -54,6 +63,10 @@ export default function UsersManager({ initialUsers, currentUserId }: { initialU
   async function removeUser(row: AdminUserRow) {
     if (row.id === currentUserId) {
       pushToast("err", "אי אפשר להסיר את המשתמש המחובר כרגע");
+      return;
+    }
+    if (row.role === "owner" && rows.filter((r) => r.role === "owner").length <= 1) {
+      pushToast("err", "אי אפשר להסיר את הבעלים היחיד — זה ינעל את כולם מחוץ לניהול המשתמשים וההגדרות");
       return;
     }
     if (!window.confirm(`להסיר את הגישה של ${row.email} לפאנל הניהול?`)) return;

@@ -9,6 +9,7 @@ export const metadata: Metadata = {
   // a literal "| Metaline" here would double it up.
   title: "הצהרת נגישות",
   description: "הצהרת הנגישות של אתר Metaline ופרטי יצירת קשר בנושאי נגישות.",
+  alternates: { canonical: "/accessibility" },
 };
 
 export default async function AccessibilityPage() {

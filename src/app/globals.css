@@ -30,6 +30,19 @@
    future decorative element that might poke past its container. */
 html, body { margin: 0; padding: 0; overflow-x: hidden; }
 
+/* Keyboard "skip to content" link — invisible until it receives focus
+   (Tab from the very top of the page), then jumps above everything else
+   so a keyboard/screen-reader user isn't forced to tab through the full
+   header/nav on every single page just to reach the actual content. */
+.skip-link {
+  position: absolute; top: -100px; left: 12px; z-index: 999;
+  background: var(--ink-1, #0e1318); color: var(--white, #fff);
+  padding: 12px 18px; border-radius: 4px; border: 1px solid var(--gold-2, #d4af37);
+  font-family: 'Rubik', sans-serif; font-weight: 600; text-decoration: none;
+  transition: top .2s ease;
+}
+.skip-link:focus { top: 12px; }
+
 /* Every icon component in the app renders a bare <svg viewBox="..."> with
    no width/height of its own — sizing is meant to come from a className
    the caller passes. Several call sites across the admin panel (leads
@@ -351,7 +364,7 @@ canvas#dust { position: absolute; inset: 0; z-index: 1; opacity: .55; }
 .cmp-card { background: linear-gradient(160deg, var(--ink-2), var(--ink-1)); border: 1px solid var(--line-2); border-radius: 4px; padding: 26px 22px; height: 100%; transform-style: preserve-3d; transition: transform .5s cubic-bezier(.2, .8, .2, 1), border-color .4s ease, box-shadow .5s ease; }
 .cmp-card:hover { transform: rotateX(4deg) translateY(-6px) translateZ(10px); border-color: var(--gold); box-shadow: 0 30px 50px -24px rgba(0, 0, 0, .7); }
 .cmp-num { font-family: 'Rubik', sans-serif; font-size: 12px; color: var(--gold-2); font-weight: 700; letter-spacing: 1px; margin-bottom: 12px; }
-.cmp-card h4 { font-size: 16.5px; font-weight: 700; color: var(--white); margin: 0 0 10px; }
+.cmp-card h3 { font-size: 16.5px; font-weight: 700; color: var(--white); margin: 0 0 10px; }
 .cmp-card p { font-size: 13.5px; color: var(--muted); line-height: 1.65; font-weight: 400; margin: 0; }
 
 /* ---------- "HOW IT WORKS" — 3D PROCESS SECTION (homepage only) ---------- */
@@ -400,7 +413,7 @@ canvas#dust { position: absolute; inset: 0; z-index: 1; opacity: .55; }
 .process-wrap:nth-child(4) .process-icon { animation-delay: 1.05s; }
 @keyframes processFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
 
-.process-card h4 { position: relative; font-size: 16.5px; font-weight: 700; color: var(--white); margin: 0 0 10px; }
+.process-card h3 { position: relative; font-size: 16.5px; font-weight: 700; color: var(--white); margin: 0 0 10px; }
 .process-card p { position: relative; font-size: 13.5px; color: var(--muted); line-height: 1.65; font-weight: 400; margin: 0; }
 
 @media (prefers-reduced-motion: reduce) {
@@ -479,6 +492,10 @@ canvas#dust { position: absolute; inset: 0; z-index: 1; opacity: .55; }
 .gal-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; }
 .gal-wrap { perspective: 900px; }
 .gal-tile { position: relative; border-radius: 4px; overflow: hidden; aspect-ratio: 4/5; background: linear-gradient(160deg, var(--ink-3), var(--ink-1)); border: 1px solid var(--line-2); display: flex; align-items: flex-end; padding: 22px; transform-style: preserve-3d; transition: transform .5s cubic-bezier(.2, .8, .2, 1), border-color .4s ease, box-shadow .5s ease; }
+/* .gal-tile is now a <button> (click-to-enlarge) — reset button defaults
+   so it keeps looking exactly like the div it used to be. */
+.gal-tile-btn { width: 100%; font: inherit; text-align: inherit; color: inherit; cursor: pointer; }
+.gal-tile-btn:focus-visible { outline: 2px solid var(--gold-2); outline-offset: 2px; }
 .gal-tile:hover { transform: rotateX(6deg) translateY(-8px) translateZ(10px); border-color: var(--gold); box-shadow: 0 40px 60px -26px rgba(0, 0, 0, .7); }
 .gal-tile .scrim { position: absolute; inset: 0; z-index: 1; background: linear-gradient(180deg, transparent 25%, rgba(0, 0, 0, .7) 100%); }
 .gal-tile img.photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
@@ -493,6 +510,28 @@ canvas#dust { position: absolute; inset: 0; z-index: 1; opacity: .55; }
   padding: 4px 10px; border-radius: 999px;
 }
 .gal-cta { text-align: center; margin-top: 48px; }
+/* Click-to-enlarge lightbox (stage 2.6 of the remediation plan). */
+.gal-lightbox-overlay {
+  position: fixed; inset: 0; z-index: 300; background: rgba(9, 12, 15, .88);
+  display: flex; align-items: center; justify-content: center; padding: 24px;
+  backdrop-filter: blur(3px);
+}
+.gal-lightbox {
+  position: relative; max-width: min(92vw, 800px); max-height: 88vh;
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+}
+.gal-lightbox-img { width: 100%; height: auto; max-height: 76vh; object-fit: contain; border-radius: 4px; }
+.gal-lightbox-art {
+  width: min(92vw, 500px); aspect-ratio: 4/5; position: relative;
+  background: linear-gradient(160deg, var(--ink-3), var(--ink-1)); border-radius: 4px; overflow: hidden;
+}
+.gal-lightbox-art .art-placeholder { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .85; }
+.gal-lightbox-close {
+  position: absolute; top: -14px; inset-inline-end: -14px; width: 38px; height: 38px;
+  border-radius: 50%; background: var(--ink-2); border: 1px solid var(--line-2); color: var(--white);
+  font-size: 22px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.gal-lightbox-caption { display: flex; align-items: center; gap: 10px; color: var(--white); font-family: 'Rubik', sans-serif; font-weight: 700; }
 .gal-filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 40px; }
 .gal-filters button { background: var(--ink-2); border: 1px solid var(--line-2); color: var(--muted); padding: 9px 18px; border-radius: 999px; font-size: 13.5px; font-family: 'Heebo', sans-serif; cursor: pointer; transition: all .25s ease; }
 .gal-filters button.active, .gal-filters button:hover { border-color: var(--gold); color: var(--gold-2); background: var(--ink-3); }
@@ -526,14 +565,15 @@ canvas#dust { position: absolute; inset: 0; z-index: 1; opacity: .55; }
 .info-card { background: linear-gradient(160deg, var(--ink-2), var(--ink-1)); border: 1px solid var(--line-2); border-radius: 4px; padding: 24px; display: flex; gap: 16px; align-items: flex-start; }
 .info-card .ico { width: 42px; height: 42px; border-radius: 50%; background: var(--ink-3); border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; flex: none; }
 .info-card .ico svg { width: 19px; height: 19px; }
-.info-card h4 { margin: 0 0 4px; font-size: 15px; color: var(--white); }
+.info-card h2 { margin: 0 0 4px; font-size: 15px; color: var(--white); }
 .info-card p { margin: 0; font-size: 14px; color: var(--muted); }
+.field-error { display: block; margin-top: 6px; font-size: 13px; color: #f3a5a5; }
 .form-status { font-size: 14px; padding: 12px 16px; border-radius: 3px; }
 .form-status.ok { background: rgba(46, 160, 67, .12); color: #7ee2a8; border: 1px solid rgba(46, 160, 67, .3); }
 .form-status.err { background: rgba(220, 38, 38, .1); color: #f3a5a5; border: 1px solid rgba(220, 38, 38, .3); }
 
 .contact-quick { background: linear-gradient(160deg, var(--ink-2), var(--ink-1)); border: 1px solid var(--line-2); border-radius: 4px; padding: 24px; }
-.contact-quick h4 { margin: 0 0 16px; font-size: 15px; color: var(--white); }
+.contact-quick h2 { margin: 0 0 16px; font-size: 15px; color: var(--white); }
 .contact-quick-row { display: flex; flex-direction: column; gap: 10px; }
 .cq-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 3px; border: 1px solid var(--line-2); background: var(--ink-3); color: var(--white); font-size: 14px; font-weight: 600; transition: border-color .25s ease, transform .2s ease, background .25s ease; }
 .cq-item svg { width: 19px; height: 19px; flex: none; }

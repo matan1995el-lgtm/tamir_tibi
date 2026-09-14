@@ -70,7 +70,19 @@ function ImageField({
     <div className="field full">
       <style>{`.pcm-ic { width: 15px; height: 15px; } .pcm-ic-xl { width: 32px; height: 32px; opacity: .5; margin-bottom: 10px; }`}</style>
       <label>{label}</label>
-      <div className="aupload" onClick={() => fileInputRef.current?.click()}>
+      <div
+        className="aupload"
+        role="button"
+        tabIndex={0}
+        aria-label="לחצו להעלאת תמונה"
+        onClick={() => fileInputRef.current?.click()}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            fileInputRef.current?.click();
+          }
+        }}
+      >
         {value ? <img src={value} alt="תצוגה מקדימה" /> : <IconPhoto className="pcm-ic-xl" />}
         <div style={{ fontSize: 13, color: "var(--muted)", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
           <IconUpload className="pcm-ic" />

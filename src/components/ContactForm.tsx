@@ -1,36 +1,61 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { isValidPhone } from "@/lib/phone";
+import { SERVICE_SLUG_LABELS } from "@/lib/service-catalog";
 
 type Status = "idle" | "sending" | "ok" | "err";
 
 export default function ContactForm({ contactFallback }: { contactFallback?: string }) {
   const [status, setStatus] = useState<Status>("idle");
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  // Stable across retries of the SAME submit attempt (network failure ->
+  // user clicks "try again") so the server can recognize a retry instead
+  // of saving a second lead — regenerated only after a successful send.
+  const idempotencyKey = useRef<string>(crypto.randomUUID());
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setStatus("sending");
     const form = e.currentTarget;
     const data = new FormData(form);
+    const phone = String(data.get("phone") ?? "");
+    if (!isValidPhone(phone)) {
+      setPhoneError("מספר הטלפון לא נראה תקין. אפשר עם או בלי מקף, למשל 054-9499280.");
+      return;
+    }
+    setPhoneError(null);
+    setStatus("sending");
     const payload = {
       name: String(data.get("name") ?? ""),
-      phone: String(data.get("phone") ?? ""),
+      phone,
       email: String(data.get("email") ?? ""),
       service: String(data.get("service") ?? ""),
+      area: String(data.get("area") ?? ""),
       message: String(data.get("message") ?? ""),
       website: String(data.get("website") ?? ""),
+      idempotency_key: idempotencyKey.current,
     };
 
     try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000);
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
+        signal: controller.signal,
       });
+      clearTimeout(timeout);
       if (!res.ok) throw new Error("failed");
       setStatus("ok");
       form.reset();
+      idempotencyKey.current = crypto.randomUUID();
     } catch {
+      // Deliberately NOT regenerating the idempotency key here — a retry
+      // of this same attempt should carry the same key, so if the first
+      // request actually reached the server despite the client seeing a
+      // failure/timeout, the retry is recognized server-side instead of
+      // creating a second lead.
       setStatus("err");
     }
   }
@@ -46,15 +71,34 @@ export default function ContactForm({ contactFallback }: { contactFallback?: str
       </div>
       <div className="field">
         <label htmlFor="name">שם מלא *</label>
-        <input id="name" name="name" type="text" required placeholder="השם שלכם" />
+        <input id="name" name="name" type="text" required placeholder="השם שלכם" autoComplete="name" />
       </div>
       <div className="field">
         <label htmlFor="phone">טלפון *</label>
-        <input id="phone" name="phone" type="tel" required placeholder="05X-XXXXXXX" />
+        <input
+          id="phone"
+          name="phone"
+          type="tel"
+          required
+          placeholder="05X-XXXXXXX"
+          autoComplete="tel"
+          aria-invalid={phoneError ? true : undefined}
+          aria-describedby={phoneError ? "phone-error" : undefined}
+          onChange={() => phoneError && setPhoneError(null)}
+        />
+        {phoneError && (
+          <span id="phone-error" className="field-error" role="alert">
+            {phoneError}
+          </span>
+        )}
       </div>
       <div className="field">
         <label htmlFor="email">אימייל</label>
-        <input id="email" name="email" type="email" placeholder="you@example.com" />
+        <input id="email" name="email" type="email" placeholder="you@example.com" autoComplete="email" />
+      </div>
+      <div className="field">
+        <label htmlFor="area">יישוב / אזור ביצוע</label>
+        <input id="area" name="area" type="text" placeholder="למשל: ראשון לציון" autoComplete="address-level2" />
       </div>
       <div className="field">
         <label htmlFor="service">סוג הפרויקט</label>
@@ -62,10 +106,11 @@ export default function ContactForm({ contactFallback }: { contactFallback?: str
           <option value="" disabled>
             בחרו שירות
           </option>
-          <option value="שער חשמלי">שער חשמלי</option>
-          <option value="מעקה אלומיניום">מעקה אלומיניום</option>
-          <option value="פרגולה">פרגולה</option>
-          <option value="מחיצת מתכת">מחיצת מתכת</option>
+          {Object.values(SERVICE_SLUG_LABELS).map((label) => (
+            <option key={label} value={label}>
+              {label}
+            </option>
+          ))}
           <option value="אחר">אחר</option>
         </select>
       </div>

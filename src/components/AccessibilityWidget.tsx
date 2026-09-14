@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 type A11yState = {
@@ -49,6 +49,9 @@ export default function AccessibilityWidget() {
   const [open, setOpen] = useState(false);
   const [state, setState] = useState<A11yState>(DEFAULT_STATE);
   const [ready, setReady] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     // localStorage doesn't exist during server render, so this one-time
@@ -78,17 +81,55 @@ export default function AccessibilityWidget() {
     }
   }, [state, ready]);
 
+  // This panel declares aria-modal="true", so it commits to full modal
+  // focus behavior (stage 8.6 of the remediation plan): focus moves in on
+  // open, Tab is trapped inside it, and focus returns to the button that
+  // opened it on close — the same pattern used by the quote-request
+  // modal (see QuoteModal.tsx for the fuller explanation of why).
   useEffect(() => {
     if (!open) return;
+    const opener = document.activeElement as HTMLElement | null;
+    const trigger = triggerRef.current;
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    const t = setTimeout(() => closeBtnRef.current?.focus(), 50);
+
+    function getFocusable(): HTMLElement[] {
+      if (!panelRef.current) return [];
+      return Array.from(
+        panelRef.current.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+      ).filter((el) => el.offsetParent !== null);
+    }
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") {
+        setOpen(false);
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const focusable = getFocusable();
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+      if (e.shiftKey && active === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
+      } else if (!panelRef.current?.contains(active)) {
+        e.preventDefault();
+        first.focus();
+      }
     }
     document.addEventListener("keydown", onKey);
     return () => {
+      clearTimeout(t);
       document.body.style.overflow = prevOverflow;
       document.removeEventListener("keydown", onKey);
+      (opener ?? trigger)?.focus?.();
     };
   }, [open]);
 
@@ -110,6 +151,7 @@ export default function AccessibilityWidget() {
   return (
     <>
       <button
+        ref={triggerRef}
         type="button"
         className="a11y-fab"
         aria-label="תפריט נגישות"
@@ -133,10 +175,10 @@ export default function AccessibilityWidget() {
       {open && (
         <>
           <div className="a11y-panel-overlay" onClick={() => setOpen(false)} />
-          <div className="a11y-panel" role="dialog" aria-modal="true" aria-label="הגדרות נגישות">
+          <div ref={panelRef} className="a11y-panel" role="dialog" aria-modal="true" aria-label="הגדרות נגישות">
             <div className="a11y-panel-head">
               <h3>הגדרות נגישות</h3>
-              <button type="button" className="a11y-panel-close" aria-label="סגירה" onClick={() => setOpen(false)}>
+              <button ref={closeBtnRef} type="button" className="a11y-panel-close" aria-label="סגירה" onClick={() => setOpen(false)}>
                 ×
               </button>
             </div>
@@ -155,35 +197,35 @@ export default function AccessibilityWidget() {
 
             <div className="a11y-row">
               <span>ניגודיות גבוהה</span>
-              <button type="button" className={`a11y-toggle${state.contrast ? " on" : ""}`} role="switch" aria-checked={state.contrast} onClick={() => toggle("contrast")}>
+              <button type="button" className={`a11y-toggle${state.contrast ? " on" : ""}`} role="switch" aria-checked={state.contrast} aria-label="ניגודיות גבוהה" onClick={() => toggle("contrast")}>
                 <span className="knob" />
               </button>
             </div>
 
             <div className="a11y-row">
               <span>גווני אפור</span>
-              <button type="button" className={`a11y-toggle${state.grayscale ? " on" : ""}`} role="switch" aria-checked={state.grayscale} onClick={() => toggle("grayscale")}>
+              <button type="button" className={`a11y-toggle${state.grayscale ? " on" : ""}`} role="switch" aria-checked={state.grayscale} aria-label="גווני אפור" onClick={() => toggle("grayscale")}>
                 <span className="knob" />
               </button>
             </div>
 
             <div className="a11y-row">
               <span>הדגשת קישורים</span>
-              <button type="button" className={`a11y-toggle${state.underlineLinks ? " on" : ""}`} role="switch" aria-checked={state.underlineLinks} onClick={() => toggle("underlineLinks")}>
+              <button type="button" className={`a11y-toggle${state.underlineLinks ? " on" : ""}`} role="switch" aria-checked={state.underlineLinks} aria-label="הדגשת קישורים" onClick={() => toggle("underlineLinks")}>
                 <span className="knob" />
               </button>
             </div>
 
             <div className="a11y-row">
               <span>גופן קריא</span>
-              <button type="button" className={`a11y-toggle${state.readableFont ? " on" : ""}`} role="switch" aria-checked={state.readableFont} onClick={() => toggle("readableFont")}>
+              <button type="button" className={`a11y-toggle${state.readableFont ? " on" : ""}`} role="switch" aria-checked={state.readableFont} aria-label="גופן קריא" onClick={() => toggle("readableFont")}>
                 <span className="knob" />
               </button>
             </div>
 
             <div className="a11y-row">
               <span>עצירת אנימציות</span>
-              <button type="button" className={`a11y-toggle${state.pauseAnim ? " on" : ""}`} role="switch" aria-checked={state.pauseAnim} onClick={() => toggle("pauseAnim")}>
+              <button type="button" className={`a11y-toggle${state.pauseAnim ? " on" : ""}`} role="switch" aria-checked={state.pauseAnim} aria-label="עצירת אנימציות" onClick={() => toggle("pauseAnim")}>
                 <span className="knob" />
               </button>
             </div>

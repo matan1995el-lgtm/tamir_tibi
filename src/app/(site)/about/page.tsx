@@ -13,6 +13,7 @@ export const metadata: Metadata = {
   // "... | Metaline" here would double up into "... | Metaline | Metaline".
   title: "אודות",
   description: "Metaline — פתרונות אלומיניום ומתכת בגימור פרימיום. הכירו את הסיפור, הערכים וצוות המומחים שלנו.",
+  alternates: { canonical: "/about" },
   // Deliberately NOT setting `openGraph` here: Next.js replaces the root
   // layout's entire resolved openGraph object (title/image/siteName/
   // locale/...) with whatever a child segment declares under this key —

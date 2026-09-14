@@ -1,9 +1,9 @@
 import Link from "next/link";
 import Image from "next/image";
 import { sanitizeHref } from "@/lib/link-safety";
-import type { SiteSettings } from "@/lib/site-data";
+import type { ServiceRow, SiteSettings } from "@/lib/site-data";
 
-export default function SiteFooter({ settings }: { settings: SiteSettings }) {
+export default function SiteFooter({ settings, services }: { settings: SiteSettings; services: ServiceRow[] }) {
   return (
     <footer className="footer">
       <div className="container footer-top">
@@ -30,20 +30,28 @@ export default function SiteFooter({ settings }: { settings: SiteSettings }) {
         <div>
           <h4>שירותים</h4>
           <ul>
-            <li><Link href="/services">שערים חשמליים</Link></li>
-            <li><Link href="/services">מעקות אלומיניום</Link></li>
-            <li><Link href="/services">פרגולות</Link></li>
-            <li><Link href="/services">מחיצות מתכת</Link></li>
+            {/* Driven by the real, admin-editable services table (not
+                hardcoded slugs) — a service renamed or removed in the admin
+                panel must never leave a dead link in the footer. */}
+            {services.length > 0 ? (
+              services.map((s) => (
+                <li key={s.id}>
+                  <Link href={`/services/${s.slug}`}>{s.title}</Link>
+                </li>
+              ))
+            ) : (
+              <li><Link href="/services">כל השירותים</Link></li>
+            )}
           </ul>
         </div>
         <div>
           <h4>יצירת קשר</h4>
           <ul>
             <li className={settings.phone ? undefined : "placeholder"}>
-              {settings.phone ?? "[להשלמה: טלפון]"}
+              {settings.phone ? <a href={`tel:${settings.phone.replace(/[^\d+]/g, "")}`}>{settings.phone}</a> : "[להשלמה: טלפון]"}
             </li>
             <li className={settings.email ? undefined : "placeholder"}>
-              {settings.email ?? "[להשלמה: אימייל]"}
+              {settings.email ? <a href={`mailto:${settings.email}`}>{settings.email}</a> : "[להשלמה: אימייל]"}
             </li>
             <li className={settings.address ? undefined : "placeholder"}>
               {settings.address ?? "[להשלמה: כתובת]"}

@@ -5,6 +5,7 @@ import { GateDivider } from "@/components/HeroScene";
 import { QuoteButton } from "@/components/QuoteModal";
 import BlockRenderer from "@/components/BlockRenderer";
 import { getBlogPostBySlug, getPublishedBlogPosts, getSeoSettings } from "@/lib/site-data";
+import { safeJsonLd } from "@/lib/json-ld";
 
 export const revalidate = 60;
 
@@ -30,6 +31,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: post.seo_title ? { absolute: post.seo_title } : post.title,
     description,
+    alternates: { canonical: `/blog/${slug}` },
     // Always set openGraph (never leave it `undefined`) — a child segment
     // that mentions the `openGraph` key at all replaces the root layout's
     // resolved OG data entirely, so the previous conditional pattern wiped
@@ -39,18 +41,49 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     openGraph: {
       title: fullTitle,
       description,
+      url: `/blog/${slug}`,
       ...(ogImage ? { images: [ogImage] } : {}),
     },
   };
 }
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://example.com";
 
 export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const post = await getBlogPostBySlug(slug);
   if (!post) notFound();
 
+  // Structured data (stage 6.2) — built only from this post's own real
+  // fields. author defaults to the business (Organization) when no
+  // individual author_name is set — never a fabricated person's name.
+  const articleJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: post.title,
+    ...(post.excerpt ? { description: post.excerpt } : {}),
+    ...(post.cover_image_url ? { image: [post.cover_image_url] } : {}),
+    ...(post.published_at ? { datePublished: post.published_at } : {}),
+    dateModified: post.updated_at,
+    author: post.author_name
+      ? { "@type": "Person", name: post.author_name }
+      : { "@type": "Organization", name: "Metaline" },
+    publisher: { "@type": "Organization", name: "Metaline" },
+  };
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "בית", item: SITE_URL },
+      { "@type": "ListItem", position: 2, name: "בלוג", item: `${SITE_URL}/blog` },
+      { "@type": "ListItem", position: 3, name: post.title, item: `${SITE_URL}/blog/${slug}` },
+    ],
+  };
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(articleJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbJsonLd) }} />
       <section className="page-hero">
         <div className="container">
           <span className="eyebrow">

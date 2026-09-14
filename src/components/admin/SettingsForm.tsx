@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { createClient } from "@/lib/supabase-browser";
 import { isSafeHref } from "@/lib/link-safety";
+import { isValidPhone } from "@/lib/phone";
 import { validateImageFile } from "@/lib/upload-guards";
 import { IconPhoto, IconUpload } from "@/components/Icons";
 
@@ -130,6 +131,20 @@ export default function SettingsForm({ initialSettings }: { initialSettings: Sit
     // is safe.
     if ((fb && !isSafeHref(fb)) || (ig && !isSafeHref(ig))) {
       pushToast("קישור הפייסבוק/אינסטגרם אינו תקין — יש להזין כתובת http(s) תקינה", "err");
+      return;
+    }
+    // These two feed tel:/wa.me links shown to every visitor (header,
+    // footer, WhatsApp popup, mobile CTA bar) — the same shape check the
+    // public contact form already applies, so a typo here can't silently
+    // break those links site-wide the way it did before.
+    const phoneVal = form.phone.trim();
+    const waVal = form.whatsapp.trim();
+    if (phoneVal && !isValidPhone(phoneVal)) {
+      pushToast("מספר הטלפון אינו תקין — בדקו את הפורמט", "err");
+      return;
+    }
+    if (waVal && !isValidPhone(waVal)) {
+      pushToast("מספר הוואטסאפ אינו תקין — בדקו את הפורמט", "err");
       return;
     }
     setSaving(true);
@@ -311,7 +326,19 @@ export default function SettingsForm({ initialSettings }: { initialSettings: Sit
         <div className="field full">
           <style>{`.sf-ic { width: 15px; height: 15px; } .sf-ic-xl { width: 32px; height: 32px; opacity: .5; margin-bottom: 10px; }`}</style>
           <label>לוגו האתר (אופציונלי — אם לא תעלו, יוצג סמל המותג המובנה)</label>
-          <div className="aupload" onClick={() => logoInputRef.current?.click()}>
+          <div
+            className="aupload"
+            role="button"
+            tabIndex={0}
+            aria-label="לחצו להעלאת לוגו"
+            onClick={() => logoInputRef.current?.click()}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                logoInputRef.current?.click();
+              }
+            }}
+          >
             {form.logo_url ? (
               <img src={form.logo_url} alt="תצוגה מקדימה" style={{ maxHeight: 60, width: "auto" }} />
             ) : (

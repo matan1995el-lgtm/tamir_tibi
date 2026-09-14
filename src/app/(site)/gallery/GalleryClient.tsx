@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
@@ -33,6 +33,14 @@ export default function GalleryClient({ projects }: { projects: GalleryProject[]
   const [active, setActive] = useState(
     initialCategory && CATEGORIES.includes(initialCategory) ? initialCategory : "הכל"
   );
+  // Ids whose real photo failed to load (broken URL, deleted Storage
+  // object, etc.) — fall back to the category illustration instead of
+  // showing a broken-image icon or an empty tile.
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
+  const [expanded, setExpanded] = useState<GalleryProject | null>(null);
+  const lightboxRef = useRef<HTMLDivElement>(null);
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = useRef<HTMLElement | null>(null);
 
   const filtered = useMemo(
     () => (active === "הכל" ? projects : projects.filter((p) => p.category === active)),
@@ -40,6 +48,57 @@ export default function GalleryClient({ projects }: { projects: GalleryProject[]
   );
 
   const serviceSlug = CATEGORY_SERVICE_SLUG[active];
+
+  function openLightbox(item: GalleryProject, e: React.MouseEvent<HTMLElement>) {
+    triggerRef.current = e.currentTarget;
+    setExpanded(item);
+  }
+
+  // Same Escape-to-close + Tab focus-trap pattern as QuoteModal/
+  // AccessibilityWidget: without it, Tab walks focus out of the dialog into
+  // the page hidden behind the overlay. Also moves focus into the dialog on
+  // open and back to the tile that opened it on close.
+  useEffect(() => {
+    if (!expanded) return;
+    const trigger = triggerRef.current;
+    function getFocusable(): HTMLElement[] {
+      if (!lightboxRef.current) return [];
+      return Array.from(
+        lightboxRef.current.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+      ).filter((el) => el.offsetParent !== null);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setExpanded(null);
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const focusable = getFocusable();
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+      if (e.shiftKey && active === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
+      } else if (!lightboxRef.current?.contains(active)) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+    document.addEventListener("keydown", onKey);
+    const t = setTimeout(() => closeBtnRef.current?.focus(), 50);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      clearTimeout(t);
+      trigger?.focus();
+    };
+  }, [expanded]);
 
   return (
     <section className="section gallery-t">
@@ -73,16 +132,25 @@ export default function GalleryClient({ projects }: { projects: GalleryProject[]
           <div className="gal-grid reveal-stagger">
             {filtered.map((item) => {
               const Art = CATEGORY_ART[item.category] ?? ArtPartition;
+              const hasPhoto = !!item.image_url && !failedImages.has(item.id);
               return (
                 <div className="gal-wrap" key={item.id}>
-                  <div className="gal-tile">
-                    {item.image_url ? (
+                  <button
+                    type="button"
+                    className="gal-tile gal-tile-btn"
+                    onClick={(e) => openLightbox(item, e)}
+                    aria-label={`הגדלת תמונה: ${item.title}`}
+                  >
+                    {hasPhoto ? (
                       <Image
                         className="photo"
-                        src={item.image_url}
+                        src={item.image_url!}
                         alt={item.title}
                         fill
                         sizes="(max-width: 620px) 100vw, (max-width: 980px) 50vw, 25vw"
+                        onError={() =>
+                          setFailedImages((prev) => new Set(prev).add(item.id))
+                        }
                       />
                     ) : (
                       <>
@@ -92,13 +160,50 @@ export default function GalleryClient({ projects }: { projects: GalleryProject[]
                     )}
                     <div className="scrim" />
                     <span className="lbl">{item.title}</span>
-                  </div>
+                  </button>
                 </div>
               );
             })}
           </div>
         )}
       </div>
+
+      {expanded && (
+        <div className="gal-lightbox-overlay" onClick={() => setExpanded(null)} role="presentation">
+          <div ref={lightboxRef} className="gal-lightbox" role="dialog" aria-modal="true" aria-label={expanded.title} onClick={(e) => e.stopPropagation()}>
+            <button ref={closeBtnRef} type="button" className="gal-lightbox-close" aria-label="סגירה" onClick={() => setExpanded(null)}>
+              ×
+            </button>
+            {expanded.image_url && !failedImages.has(expanded.id) ? (
+              <Image
+                src={expanded.image_url}
+                alt={expanded.title}
+                width={1200}
+                height={1500}
+                className="gal-lightbox-img"
+                sizes="90vw"
+              />
+            ) : (
+              (() => {
+                const Art = CATEGORY_ART[expanded.category] ?? ArtPartition;
+                return (
+                  <div className="gal-lightbox-art">
+                    <Art className="art-placeholder" />
+                  </div>
+                );
+              })()
+            )}
+            <div className="gal-lightbox-caption">
+              <span>{expanded.title}</span>
+              {(!expanded.image_url || failedImages.has(expanded.id)) && (
+                <span className="art-badge" style={{ position: "static" }}>
+                  הדמיה
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

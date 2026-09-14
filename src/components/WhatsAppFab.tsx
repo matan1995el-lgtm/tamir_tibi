@@ -34,6 +34,21 @@ const MAIL_ICON = (
   </svg>
 );
 
+// Generic "contact us" icon for the floating trigger button — it opens a
+// menu of several channels (WhatsApp, phone, email, form), not WhatsApp
+// specifically, so showing the WhatsApp glyph there would mislead a
+// visitor into expecting a WhatsApp-only action (stage 4.1 of the
+// remediation plan). The WhatsApp glyph (WA_ICON) is still used for the
+// WhatsApp option inside the opened panel, where it's accurate.
+const CONTACT_ICON = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 5.5h16a1 1 0 0 1 1 1V16a1 1 0 0 1-1 1H9l-4 3.5V17H4a1 1 0 0 1-1-1V6.5a1 1 0 0 1 1-1Z" />
+    <circle cx="8.3" cy="11.3" r="1.05" fill="currentColor" stroke="none" />
+    <circle cx="12" cy="11.3" r="1.05" fill="currentColor" stroke="none" />
+    <circle cx="15.7" cy="11.3" r="1.05" fill="currentColor" stroke="none" />
+  </svg>
+);
+
 const FORM_ICON = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <path d="M7 3.5h7l4 4V20a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1Z" />
@@ -84,7 +99,7 @@ export default function WhatsAppFab({
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
       >
-        {WA_ICON}
+        {CONTACT_ICON}
       </button>
 
       {open && (

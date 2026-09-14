@@ -37,7 +37,7 @@ function csvEscape(value: string): string {
 }
 
 function downloadLeadsCsv(rows: Lead[]) {
-  const headers = ["שם", "טלפון", "אימייל", "שירות", "סטטוס", "הודעה", "תאריך"];
+  const headers = ["שם", "טלפון", "אימייל", "שירות", "יישוב/אזור", "סטטוס", "הודעה", "תאריך"];
   const lines = [headers.map(csvEscape).join(",")];
   for (const l of rows) {
     lines.push(
@@ -46,6 +46,7 @@ function downloadLeadsCsv(rows: Lead[]) {
         l.phone,
         l.email ?? "",
         l.service ?? "",
+        l.area ?? "",
         STATUS_LABELS[l.status],
         (l.message ?? "").replace(/\n/g, " "),
         new Date(l.created_at).toLocaleDateString("he-IL"),
@@ -74,6 +75,7 @@ export type Lead = {
   phone: string;
   email: string | null;
   service: string | null;
+  area: string | null;
   message: string | null;
   status: LeadStatus;
   created_at: string;
@@ -483,6 +485,7 @@ export default function LeadsTable({ initialLeads }: { initialLeads: Lead[] }) {
               <DetailRow label="טלפון" value={viewingLead.phone} />
               <DetailRow label="אימייל" value={viewingLead.email ?? "—"} />
               <DetailRow label="שירות" value={viewingLead.service ?? "—"} />
+              <DetailRow label="יישוב / אזור" value={viewingLead.area ?? "—"} />
               <DetailRow
                 label="תאריך פנייה"
                 value={new Date(viewingLead.created_at).toLocaleDateString("he-IL")}
